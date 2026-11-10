@@ -1,5 +1,6 @@
 import {CAMERA_ASCENT_START} from './render/flight-path.js';
 import {Soundscape} from './audio/soundscape.js';
+import {SmoothScroll} from './motion/smooth-scroll.js';
 
 const root = document.documentElement;
 const world = document.querySelector('#world');
@@ -18,6 +19,7 @@ const CAMERA_END = 6.9;
 const TITLE_START = 6.9;
 const STORY_END = 10.2;
 const EASE = 'cubic-bezier(.22, .61, .36, 1)';
+const smoothScroll = new SmoothScroll();
 const soundscape = new Soundscape({cameraStart: CAMERA_START, cameraEnd: CAMERA_END, onState(state) {
   root.dataset.audioState = state;
 }});
@@ -55,6 +57,7 @@ function fallback() {
   cancelAnimationFrame(frameId);
   animations.forEach(animation => animation.cancel());
   soundscape.dispose();
+  smoothScroll.stop();
   engine?.dispose();
   root.classList.remove('is-loading', 'is-locked', 'is-enhanced', 'is-webgl', 'is-exploring');
   root.dataset.phase = 'fallback';
@@ -113,6 +116,7 @@ function unlock() {
   root.classList.remove('is-locked');
   root.classList.add('is-exploring');
   setPhase('exploring');
+  smoothScroll.start();
   lagoon.setAttribute('aria-label', 'Dos flamencs a contrallum formen un cor al capvespre');
 }
 
@@ -125,7 +129,8 @@ function dismissScrollHint() {
 
 function frame(now) {
   if (stopped || document.hidden) return;
-  if (lastFrame !== null) clock += Math.min((now - lastFrame) / 1000, .1);
+  const elapsed = lastFrame === null ? 0 : Math.min((now - lastFrame) / 1000, .1);
+  clock += elapsed;
   lastFrame = now;
   const story = storyStarted < 0 ? -1 : clock - storyStarted;
   let camera = 0;
@@ -146,7 +151,9 @@ function frame(now) {
   if (titleShown) camera = 1;
   if (story >= STORY_END && phase !== 'exploring') unlock();
   if (phase === 'exploring') {
-    camera = 1 - window.scrollY / lagoon.offsetHeight;
+    const progress = smoothScroll.update(elapsed);
+    camera = 1 - progress;
+    world.style.transform = `translate3d(0, ${-progress * lagoon.offsetHeight}px, 0)`;
     if (!scrollShown && !didScroll && clock - phaseStarted >= 5) {
       scrollShown = true;
       scrollHint.hidden = false;
@@ -182,7 +189,7 @@ window.addEventListener('scroll', dismissScrollHint, {passive: true});
 scrollHint.addEventListener('click', () => {
   didScroll = true;
   scrollHint.hidden = true;
-  window.scrollTo({top: lagoon.offsetTop, behavior: 'smooth'});
+  smoothScroll.to(1);
 });
 window.addEventListener('scene-load-timeout', fallback, {once: true});
 document.addEventListener('visibilitychange', () => {
@@ -221,7 +228,7 @@ async function initialize() {
     engine.onContextLost = fallback;
     engine.onLoadProgress = (loaded, total) => progress(62 + Math.round(30 * loaded / total));
     progress(62);
-    await Promise.all([engine.prepare(), document.fonts.load('80px Allura')]);
+    await Promise.all([engine.prepare(), document.fonts.load('italic 80px "Cormorant Garamond"')]);
     if (stopped) return;
     soundscape.setLiftoff(engine.spriteAssets.manifest.timing.liftoff);
     progress(100);

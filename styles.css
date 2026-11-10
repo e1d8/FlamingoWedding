@@ -1,8 +1,8 @@
 @font-face {
-  font-family: Allura;
-  src: url('./assets/allura-title.woff2') format('woff2');
+  font-family: 'Cormorant Garamond';
+  src: url('./assets/cormorant-garamond-title-italic.woff2') format('woff2');
   font-weight: 400;
-  font-style: normal;
+  font-style: italic;
   font-display: swap;
 }
 
@@ -46,8 +46,8 @@ button[hidden] { display: none; }
 .high-cloud-one { top: 25%; left: -10%; transform: rotate(-5deg); }
 .high-cloud-two { top: 67%; right: -8%; width: 58%; opacity: .13; animation-delay: -19s; }
 .title-composition { position: absolute; z-index: 2; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 18px 2%; }
-h1 { margin: -2px 0 0; font-family: Allura, 'Snell Roundhand', 'Apple Chancery', cursive; font-weight: 400; font-size: clamp(72px, 21vw, 156px); line-height: 1.35; letter-spacing: -.02em; display: flex; align-items: baseline; justify-content: center; gap: .18em; white-space: nowrap; text-shadow: 0 2px 35px #fff0df42; }
-/* Allura's swashes extend past the advance width. Keep them inside each animated
+h1 { margin: -2px 0 0; font-family: 'Cormorant Garamond', Baskerville, 'Times New Roman', serif; font-weight: 400; font-style: italic; font-synthesis: none; font-size: clamp(65px, 21vw, 156px); line-height: 1.35; letter-spacing: .025em; display: flex; align-items: baseline; justify-content: center; gap: .18em; white-space: nowrap; text-shadow: 0 2px 35px #fff0df42; }
+/* Italic terminals extend past the advance width. Keep them inside each animated
    paint box, without changing the spacing or the title's overall footprint. */
 h1 > span { padding: .08em .32em; margin: -.08em -.32em; overflow: visible; }
 .title-i { font-size: .57em; }
@@ -118,7 +118,14 @@ html.is-locked { overflow: hidden; overscroll-behavior: none; }
 .is-enhanced .title-composition.is-revealing { visibility: visible; }
 .is-enhanced .couple.is-present { visibility: visible; }
 .is-enhanced .world { will-change: transform; }
-.is-exploring .world { will-change: auto; }
+/* Keep the DOM and the WebGL camera on the same interpolated position. Native
+   scrolling remains the input; the fixed world avoids compositor scroll jumps. */
+html.is-exploring { overscroll-behavior-y: none; }
+.is-exploring .invitation { height: calc(var(--scene-height) + 100vh); overflow-anchor: none; }
+@supports (height: 100dvh) {
+  .is-exploring .invitation { height: calc(var(--scene-height) + 100dvh); }
+}
+.is-exploring .world { position: fixed; top: 0; left: 0; will-change: transform; }
 .is-enhanced .lagoon { opacity: 0; }
 .is-enhanced .lagoon.is-visible { opacity: 1; }
 html:not(.is-enhanced):not(.is-loading) * { animation: none !important; }
@@ -189,7 +196,7 @@ html { background: #282330; }
 .is-webgl .sky::after { display: none; }
 .is-webgl .lagoon { opacity: 1; }
 .is-webgl .world { will-change: transform; }
-.is-webgl.is-exploring .world { will-change: auto; }
+.is-webgl.is-exploring .world { will-change: transform; }
 .is-webgl h1 { color: #f6e3c9; text-shadow: 0 0 45px #e1a37518, 0 2px 1px #191a2c24; }
 .is-webgl .title-composition { padding-bottom: 3%; }
 .is-webgl .title-ornament { color: #e2bd91; opacity: .8; }
