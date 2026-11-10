@@ -1,7 +1,7 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {SpriteFlamingo, SpriteCouple, loadSpriteAssets, createSpriteFlock} from './sprites.js';
+import {SpriteFlamingo, SpriteCouple, loadSpriteAssets, createSpriteFlock} from './sprites.js?v=flamingos-20261110-5';
 import {WATERLINE, submergedBodyY} from './water-level.js';
-import {SkyFlights, INTRO_FLOCK_START, INTRO_FLOCK_DURATION} from './sky-flights.js';
+import {SkyFlights, INTRO_FLOCK_START, INTRO_FLOCK_DURATION} from './sky-flights.js?v=flamingos-20261110-5';
 import {vertexShader, fragmentShader} from './atmosphere.js';
 
 const smooth = THREE.MathUtils.smoothstep;
@@ -124,7 +124,7 @@ export class LagoonRenderer {
     this.spriteAssets = assets;
     if (assets.maximumSize > this.renderer.capabilities.maxTextureSize) throw new Error('Sprite sheet exceeds GPU texture capacity');
     Object.values(assets.textures).flat().forEach(texture => this.renderer.initTexture(texture));
-    this.solo = new SpriteFlamingo(assets);
+    this.solo = new SpriteFlamingo(assets, undefined, {idle: true});
     this.couple = new SpriteCouple(assets);
     this.solo.viewportWidth = this.aspect;
     this.flock = createSpriteFlock(assets);
@@ -157,7 +157,7 @@ export class LagoonRenderer {
     }
     else {
       const scale = Math.min(this.birdScale, this.aspect * .94 / this.couple.opaqueWidth);
-      this.couple.place(submergedBodyY(this.couple.footY, scale), scale);
+      this.couple.place(submergedBodyY(this.couple.footY, scale), scale, time);
     }
 
     if (time - this.lastRing > 2.8 && (story < .5 || pair)) {
@@ -196,7 +196,7 @@ export class LagoonRenderer {
     }
 
     const flockAge = story - INTRO_FLOCK_START;
-    this.flock.visible = flockAge >= 0 && flockAge < INTRO_FLOCK_DURATION;
+    this.flock.visible = story >= INTRO_FLOCK_START && story < INTRO_FLOCK_START + INTRO_FLOCK_DURATION;
     if (this.flock.visible) {
       const progress = flockAge / INTRO_FLOCK_DURATION;
       this.flock.position.x = THREE.MathUtils.lerp(-this.aspect*.7-.12, this.aspect*.8+.4, progress);

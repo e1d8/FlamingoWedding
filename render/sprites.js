@@ -1,5 +1,6 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {flightOffset} from './flight-path.js';
+import {IdleMotion} from './idle-motion.js?v=flamingos-20261110-5';
 
 const smooth = (a, b, t) => THREE.MathUtils.smoothstep(t, a, b);
 const directory = new URL('../assets/flamingo/', import.meta.url);
@@ -68,10 +69,20 @@ function silhouetteMaterial(texture) {
 }
 
 class AtlasSprite {
-  constructor(assets, sheets, sharedMaterials) {
+  constructor(assets, sheets, sharedMaterials, {columns = 1, rows = 1, crop = [0, 1]} = {}) {
     this.assets = assets;
     this.group = new THREE.Group();
-    this.geometry = new THREE.PlaneGeometry(1, 1);
+    this.geometry = new THREE.PlaneGeometry(1, 1, columns, rows);
+    this.baseUv = this.geometry.attributes.uv.array.slice();
+    this.crop = crop;
+    if (columns > 1) {
+      const restUv = new Float32Array(this.baseUv.length);
+      for (let i = 0; i < restUv.length; i += 2) {
+        restUv[i] = crop[0] + this.baseUv[i] * (crop[1] - crop[0]);
+        restUv[i + 1] = this.baseUv[i + 1];
+      }
+      this.geometry.setAttribute('restUv', new THREE.BufferAttribute(restUv, 2));
+    }
     this.geometry.attributes.position.setUsage(THREE.DynamicDrawUsage);
     this.geometry.attributes.uv.setUsage(THREE.DynamicDrawUsage);
     this.materials = sharedMaterials ?? Object.fromEntries(sheets.flatMap(name => assets.textures[name].map((texture, index) => [`${name}:${index}`, silhouetteMaterial(texture)])));
@@ -96,15 +107,15 @@ class AtlasSprite {
     const positions = this.geometry.attributes.position;
     const uv = this.geometry.attributes.uv;
     // Every authored pose keeps its aspect ratio. Only the torso anchor is registered.
-    const left = (x - anchorX) * unit, right = (x + width - anchorX) * unit;
-    const top = (anchorY - y) * unit, bottom = (anchorY - y - height) * unit;
-    positions.setXYZ(0, left, top, 0); positions.setXYZ(1, right, top, 0);
-    positions.setXYZ(2, left, bottom, 0); positions.setXYZ(3, right, bottom, 0);
     // A half-texel inset prevents a neighboring sprite's feathers from bleeding in.
     const u0 = (x + .5) / page.width, u1 = (x + width - .5) / page.width;
     const v0 = 1 - (y + height - .5) / page.height, v1 = 1 - (y + .5) / page.height;
-    uv.setXY(0, u0, v1); uv.setXY(1, u1, v1);
-    uv.setXY(2, u0, v0); uv.setXY(3, u1, v0);
+    for (let i = 0; i < positions.count; i++) {
+      const u = this.crop[0] + this.baseUv[i * 2] * (this.crop[1] - this.crop[0]);
+      const v = this.baseUv[i * 2 + 1];
+      positions.setXYZ(i, (x + u * width - anchorX) * unit, (anchorY - y - height + v * height) * unit, 0);
+      uv.setXY(i, u0 + (u1 - u0) * u, v0 + (v1 - v0) * v);
+    }
     positions.needsUpdate = true;
     uv.needsUpdate = true;
     this.mesh.material = this.materials[`${sheetName}:${frame.page}`];
@@ -115,14 +126,21 @@ class AtlasSprite {
 
 export class SpriteCouple extends AtlasSprite {
   constructor(assets) {
-    super(assets, ['pair']);
+    super(assets, ['pair'], undefined, {columns: 48, rows: 56, crop: [0, .5]});
+    this.right = new AtlasSprite(assets, ['pair'], undefined, {columns: 48, rows: 56, crop: [.5, 1]});
+    this.group.add(this.right.group);
+    this.materials['pair:right'] = this.right.mesh.material;
+    this.leftMotion = new IdleMotion(this.mesh.material, -1);
+    this.rightMotion = new IdleMotion(this.right.mesh.material, 1);
     const frame = assets.manifest.pair.frames[0];
     this.opaqueWidth = (frame.bounds[2] - frame.bounds[0]) * frame.unitScale;
   }
 
-  place(bodyY, scale) {
+  place(bodyY, scale, time = 0) {
     this.group.position.set(0, bodyY, 0);
     this.group.scale.setScalar(scale);
+    this.leftMotion.update(time);
+    this.rightMotion.update(time);
   }
 
   contactXs() {
@@ -132,8 +150,9 @@ export class SpriteCouple extends AtlasSprite {
 }
 
 export class SpriteFlamingo extends AtlasSprite {
-  constructor(assets, sharedMaterials) {
-    super(assets, ['takeoff', 'flight'], sharedMaterials);
+  constructor(assets, sharedMaterials, {idle = false} = {}) {
+    super(assets, ['takeoff', 'flight'], sharedMaterials, idle ? {columns: 44, rows: 52} : {});
+    if (idle) this.idleMotion = new IdleMotion(this.materials['takeoff:0']);
     this.flightLeftReach = Math.max(...assets.manifest.flight.frames.map(frame => (frame.pivot[0] - frame.bounds[0]) * frame.unitScale));
     this.viewportWidth = 1;
   }
@@ -141,6 +160,7 @@ export class SpriteFlamingo extends AtlasSprite {
   update(time, story = -1, x = 0, bodyY = .454, scale = .00108) {
     const state = spriteFrame(story, this.assets.manifest);
     this.setFrame(state.sheet, state.frame);
+    this.idleMotion?.update(time, story < 0 ? 1 : 1 - smooth(0, this.assets.manifest.timing.hold, story));
     const {liftoff: lift, hold, takeoffFps} = this.assets.manifest.timing;
     const offset = flightOffset(story, {
       runStart: hold + 4 / takeoffFps, liftoff: lift, scale,
@@ -149,7 +169,7 @@ export class SpriteFlamingo extends AtlasSprite {
     this.group.position.set(x + offset.x, bodyY + offset.y, 0);
     this.group.scale.setScalar(scale);
     this.mesh.scale.setScalar(1 - .2 * smooth(lift, lift + .9, story));
-    // Authored wing, neck, bill and leg contours are never procedurally deformed.
+    // Running and flying contours come entirely from the authored poses.
     this.group.rotation.z = 0;
   }
 
