@@ -226,7 +226,7 @@ window.addEventListener('pageshow', event => {
 async function initialize() {
   try {
     progress(12);
-    const {LagoonRenderer} = await import('./render/lagoon.js?v=flamingos-20261110-5');
+    const {LagoonRenderer} = await import('./render/lagoon.js?v=flamingos-20261110-7');
     if (stopped) return;
     progress(42);
     engine = new LagoonRenderer(stage);

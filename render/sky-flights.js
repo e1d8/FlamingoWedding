@@ -1,5 +1,5 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {SpriteFlamingo, createFlightMaterials} from './sprites.js?v=flamingos-20261110-5';
+import {SpriteFlamingo, createFlightMaterials} from './sprites.js?v=flamingos-20261110-7';
 
 export const INTRO_FLOCK_START = 5.65;
 export const INTRO_FLOCK_DURATION = 13;
@@ -13,27 +13,31 @@ export class SkyFlights {
     this.random = random;
     this.group = new THREE.Group();
     this.group.visible = false;
-    // One reusable formation per side; each can contain a single bird or a pair.
-    this.formations = [1, -1].map(direction => {
+    // Two reusable waves let the incoming birds overlap the outgoing ones,
+    // preserving each flight's complete trajectory and wingbeat until its end.
+    this.slots = Array.from({length: 2}, () => ({wave: null, formations: [1, -1].map(direction => {
       const group = new THREE.Group(), materials = createFlightMaterials(assets);
       const birds = Array.from({length: 2}, () => new SpriteFlamingo(assets, materials));
       birds.forEach(bird => group.add(bird.group));
       group.scale.x = direction;
+      group.visible = false;
       this.group.add(group);
       return {group, materials, birds, direction, flight: null};
-    });
+    })}));
+    this.formations = this.slots.flatMap(slot => slot.formations);
     this.materials = Object.fromEntries(this.formations.flatMap((formation, index) =>
       Object.entries(formation.materials).map(([key, material]) => [`${index}:${key}`, material])));
     this.wave = null;
-    this.nextAt = INTRO_FLOCK_END;
+    this.nextAt = INTRO_FLOCK_START;
     this.lastStory = null;
     this.lastHeightBand = -1;
   }
 
   begin(story, {camera, viewHeight}) {
+    const slot = this.slots.find(slot => !slot.wave);
     const random = this.random;
     const low = Math.max(.75, camera + .08), high = Math.max(low, camera + viewHeight - .08);
-    for (const formation of this.formations) {
+    for (const formation of slot.formations) {
       // Use the whole visible sky, including the names, with varied heights on
       // each side. The chosen trajectories remain in the landscape when scrolling.
       let band = Math.floor(random() * 3);
@@ -53,30 +57,39 @@ export class SkyFlights {
       };
       formation.birds.forEach((bird, index) => { bird.group.visible = index < formation.flight.count; });
     }
-    this.wave = {start: story, end: story + Math.max(...this.formations.map(f => f.flight.duration))};
-    this.nextAt = this.wave.end;
+    this.wave = {start: story, end: story + Math.max(...slot.formations.map(f => f.flight.duration)), formations: slot.formations};
+    slot.wave = this.wave;
+    this.nextAt = this.wave.end - 1;
   }
 
   update(story, viewport) {
     const rewound = this.lastStory !== null && story < this.lastStory;
     this.lastStory = story;
-    if (story < INTRO_FLOCK_END) {
+    if (story < INTRO_FLOCK_START || rewound) {
       this.wave = null;
-      this.formations.forEach(formation => { formation.flight = null; });
+      this.slots.forEach(slot => { slot.wave = null; });
+      this.formations.forEach(formation => { formation.flight = null; formation.group.visible = false; });
       this.group.visible = false;
-      this.nextAt = INTRO_FLOCK_END;
-      return;
+      this.nextAt = Math.max(story, INTRO_FLOCK_START);
+      if (story < INTRO_FLOCK_START) return;
     }
-    if (rewound) { this.wave = null; this.nextAt = story; }
-    if (!this.wave || story >= this.wave.end) {
-      // Both sides restart together at the longest flight's end, with no idle
-      // frame. A large seek starts one new wave rather than replaying a backlog.
+    for (const slot of this.slots) {
+      if (slot.wave && story >= slot.wave.end) {
+        slot.wave = null;
+        slot.formations.forEach(formation => { formation.flight = null; formation.group.visible = false; });
+      }
+    }
+    if (!this.wave || story >= this.nextAt) {
+      // Start both sides one second before the previous wave's longest flight
+      // finishes. Large seeks start one wave, without accumulating missed ones.
       this.begin(story - this.nextAt > 2 ? story : this.nextAt, viewport);
     }
     this.group.visible = true;
     const {aspect} = viewport;
     for (const formation of this.formations) {
-      const flight = formation.flight, age = story - flight.start;
+      const flight = formation.flight;
+      if (!flight) continue;
+      const age = story - flight.start;
       formation.group.visible = story < flight.start + flight.duration;
       if (!formation.group.visible) continue;
       const progress = age / flight.duration;
