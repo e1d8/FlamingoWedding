@@ -17,7 +17,7 @@
         const loader = document.getElementById('loader');
         if (loader) loader.hidden = true;
         window.dispatchEvent(new Event('scene-load-timeout'));
-      }, 20000);
+      }, 60000);
     </script>
     <script type="module" src="./scene.js"></script>
   </head>
@@ -209,9 +209,9 @@
           </div>
 
           <div id="couple" class="couple bird-position" role="img" aria-label="Dos flamencs, cara a cara, formen un cor amb els colls">
-            <div class="bird-reflection couple-reflection"><svg viewBox="0 0 600 420"><use href="#loving-flamingo"/><use href="#loving-flamingo" transform="translate(600 0) scale(-1 1)"/></svg></div>
-            <svg class="couple-birds" viewBox="0 0 600 420"><use href="#loving-flamingo"/><use href="#loving-flamingo" transform="translate(600 0) scale(-1 1)"/></svg>
-            <svg class="couple-ripples" viewBox="0 0 600 38" preserveAspectRatio="none"><g fill="none" stroke="#fff0d5" stroke-width="1"><ellipse class="ripple ripple-one" cx="232" cy="16" rx="52" ry="4"/><ellipse class="ripple ripple-two" cx="371" cy="16" rx="53" ry="4"/><ellipse cx="300" cy="20" rx="133" ry="7" opacity=".35"/></g></svg>
+            <div class="bird-reflection couple-reflection"><img src="./assets/flamingo/couple.png" width="1536" height="1024" alt=""></div>
+            <img class="couple-birds" src="./assets/flamingo/couple.png" width="1536" height="1024" alt="">
+            <svg class="couple-ripples" viewBox="0 0 600 38" preserveAspectRatio="none"><g fill="none" stroke="#fff0d5" stroke-width="1"><ellipse class="ripple ripple-one" cx="181" cy="16" rx="52" ry="4"/><ellipse class="ripple ripple-two" cx="418" cy="16" rx="53" ry="4"/><ellipse cx="300" cy="20" rx="169" ry="7" opacity=".35"/></g></svg>
           </div>
           <div class="water-vignette" aria-hidden="true"></div>
         </section>

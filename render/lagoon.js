@@ -1,5 +1,6 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {Flamingo, createFlock} from './birds.js';
+import {SpriteFlamingo, SpriteCouple, loadSpriteAssets, createSpriteFlock} from './sprites.js';
+import {WATERLINE, submergedBodyY} from './water-level.js';
 import {vertexShader, fragmentShader} from './atmosphere.js';
 
 const smooth = THREE.MathUtils.smoothstep;
@@ -52,27 +53,22 @@ export class LagoonRenderer {
     this.camera = new THREE.OrthographicCamera(-.5, .5, .5, -.5, .1, 100);
     this.camera.position.set(0, .5, 10);
     this.target = new THREE.WebGLRenderTarget(1, 1, {depthBuffer: false});
-    this.ripples = Array.from({length: 8}, () => new THREE.Vector4(0, .24, -10, 0));
+    this.ripples = Array.from({length: 8}, () => new THREE.Vector4(0, WATERLINE, -10, 0));
     this.rippleCursor = 0;
     this.lastRing = -10;
     this.lastStep = -1;
     this.uniforms = {
       uTime: {value: 0}, uBottom: {value: 0}, uAspect: {value: 1},
       uViewHeight: {value: 1}, uIntro: {value: 0}, uImpulse: {value: 0},
+      uWaterline: {value: WATERLINE},
       uBirds: {value: this.target.texture}, uRipples: {value: this.ripples},
     };
     this.backgroundMaterial = new THREE.ShaderMaterial({uniforms: this.uniforms, vertexShader, fragmentShader, depthTest: false, depthWrite: false});
     this.background.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.backgroundMaterial));
-    this.solo = new Flamingo();
-    this.couple = [new Flamingo({love: true}), new Flamingo({love: true, mirror: true})];
-    this.birdScene.add(this.solo.group, ...this.couple.map(bird => bird.group));
-    this.couple.forEach(bird => { bird.group.visible = false; });
-    this.flock = createFlock();
-    this.flock.position.z = -1;
-    this.decorScene.add(this.flock);
+    this.assetAbort = new AbortController();
     this.reeds = [makeReeds(-1), makeReeds(1)];
     this.reeds.forEach(reed => this.decorScene.add(reed));
-    this.clip = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -.24)];
+    this.clip = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -WATERLINE)];
     this.dropletPositions = new Float32Array(54 * 3);
     this.dropletGeometry = new THREE.BufferGeometry();
     this.dropletGeometry.setAttribute('position', new THREE.BufferAttribute(this.dropletPositions, 3).setUsage(THREE.DynamicDrawUsage));
@@ -114,8 +110,19 @@ export class LagoonRenderer {
   }
 
   async prepare() {
+    const assets = await loadSpriteAssets(this.assetAbort.signal, this.onLoadProgress);
+    if (this.disposed) { assets.dispose(); return; }
+    this.spriteAssets = assets;
+    if (assets.maximumSize > this.renderer.capabilities.maxTextureSize) throw new Error('Sprite sheet exceeds GPU texture capacity');
+    Object.values(assets.textures).flat().forEach(texture => this.renderer.initTexture(texture));
+    this.solo = new SpriteFlamingo(assets);
+    this.couple = new SpriteCouple(assets);
+    this.solo.viewportWidth = this.aspect;
+    this.flock = createSpriteFlock(assets);
+    this.flock.position.z = -1;
+    this.birdScene.add(this.solo.group, this.couple.group);
+    this.decorScene.add(this.flock);
     this.solo.update(0);
-    this.couple.forEach(bird => bird.update(0));
     await this.renderer.compileAsync(this.background, this.screenCamera);
     await this.renderer.compileAsync(this.birdScene, this.camera);
     await this.renderer.compileAsync(this.decorScene, this.camera);
@@ -133,29 +140,35 @@ export class LagoonRenderer {
     this.uniforms.uIntro.value = intro;
     this.camera.position.y = camera + this.viewHeight / 2;
     this.solo.group.visible = !pair;
-    this.couple.forEach(bird => { bird.group.visible = pair; });
-    const bodyY = .24 + 169 * this.birdScale;
-    if (!pair) this.solo.update(time, story, 0, bodyY, this.birdScale);
+    this.couple.group.visible = pair;
+    if (!pair) {
+      this.solo.viewportWidth = this.aspect;
+      this.solo.update(time, story, -Math.min(.03, this.aspect * .065), submergedBodyY(this.solo.footY, this.birdScale), this.birdScale);
+    }
     else {
-      const offset = 91 * this.birdScale;
-      this.couple[0].update(time, -1, -offset, bodyY, this.birdScale);
-      this.couple[1].update(time + .4, -1, offset, bodyY, this.birdScale);
+      const scale = Math.min(this.birdScale, this.aspect * .94 / this.couple.opaqueWidth);
+      this.couple.place(submergedBodyY(this.couple.footY, scale), scale);
     }
 
     if (time - this.lastRing > 2.8 && (story < .5 || pair)) {
       this.lastRing = time;
-      this.ring(pair ? -.085 : -.009, .24, time, .44);
-      if (pair) this.ring(.085, .24, time + .17, .44);
+      const contacts = pair ? this.couple.contactXs() : [this.solo.contactX()];
+      contacts.forEach((x, i) => this.ring(x, WATERLINE, time + i * .17, .44));
     }
-    if (story > .7 && story < 2) {
-      const step = Math.floor((story - .7) / .32);
+    const liftoff = this.spriteAssets.manifest.timing.liftoff;
+    if (story > .4 && story < liftoff) {
+      const step = Math.floor((story - .4) / .25);
       if (step !== this.lastStep) {
         this.lastStep = step;
-        this.ring(this.solo.group.position.x, .24, time, 1.2);
+        this.ring(this.solo.contactX(), WATERLINE, time, 1.2);
       }
     }
-    const splash = story - 1.7;
+    const splash = story - liftoff;
     const splashVisible = splash > 0 && splash < 1.55 && !pair;
+    if (splash > 0 && this.splashX === undefined) {
+      const {hold, takeoffFps} = this.spriteAssets.manifest.timing;
+      this.splashX = this.solo.contactX(Math.floor((liftoff - hold) * takeoffFps));
+    }
     this.droplets.visible = splashVisible;
     if (splashVisible) {
       for (let i = 0; i < 54; i++) {
@@ -163,8 +176,8 @@ export class LagoonRenderer {
         const angle = i * 2.399;
         const velocity = .02 + random * .11;
         const x = Math.cos(angle) * velocity * splash;
-        const y = .24 + Math.abs(Math.sin(angle)) * velocity * 1.6 * splash - .13 * splash * splash;
-        this.dropletPositions[i * 3] = .024 + x;
+        const y = WATERLINE + Math.abs(Math.sin(angle)) * velocity * 1.6 * splash - .13 * splash * splash;
+        this.dropletPositions[i * 3] = this.splashX + x;
         this.dropletPositions[i * 3 + 1] = y;
         this.dropletPositions[i * 3 + 2] = .2;
       }
@@ -179,17 +192,18 @@ export class LagoonRenderer {
       this.flock.position.x = THREE.MathUtils.lerp(-this.aspect*.7-.12, this.aspect*.8+.4, progress);
       this.flock.position.y = 1.65 + progress*.16;
       this.flock.scale.setScalar(1-progress*.37);
-      this.flock.material.uniforms.uTime.value = time;
-      this.flock.material.uniforms.uOpacity.value = smooth(flockAge, 0, 1.4) * (1-smooth(flockAge, 10, 13)) * .68;
+      this.flock.userData.updateSprites(time, smooth(flockAge, 0, 1.4) * (1-smooth(flockAge, 10, 13)) * .68);
     }
     this.reeds[0].rotation.z = Math.sin(time * .31) * .013;
     this.reeds[1].rotation.z = Math.sin(time * .26 + 1) * .01;
 
     // The transparent bird pass supplies a live reflection, including every wingbeat.
+    // Submerge grounded legs, but preserve the complete wings once airborne.
+    const birdClipping = pair || story < liftoff ? this.clip : [];
     this.renderer.setRenderTarget(this.target);
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.clear();
-    this.renderer.clippingPlanes = this.clip;
+    this.renderer.clippingPlanes = birdClipping;
     this.renderer.render(this.birdScene, this.camera);
     this.renderer.setRenderTarget(null);
     this.renderer.setClearColor(0x221c2c, 1);
@@ -197,13 +211,15 @@ export class LagoonRenderer {
     this.renderer.clear();
     this.renderer.render(this.background, this.screenCamera);
     this.renderer.clearDepth();
-    this.renderer.clippingPlanes = this.clip;
+    this.renderer.clippingPlanes = birdClipping;
     this.renderer.render(this.birdScene, this.camera);
     this.renderer.clippingPlanes = [];
     this.renderer.render(this.decorScene, this.camera);
   }
 
   dispose() {
+    this.disposed = true;
+    this.assetAbort.abort();
     this.resizeObserver?.disconnect();
     const disposed = new Set();
     for (const scene of [this.background, this.birdScene, this.decorScene]) {
@@ -219,6 +235,10 @@ export class LagoonRenderer {
       });
     }
     this.target.dispose();
+    for (const material of [...Object.values(this.solo?.materials ?? {}), ...Object.values(this.couple?.materials ?? {}), ...(this.flock?.userData.materials ?? [])]) {
+      if (!disposed.has(material)) { material.dispose(); disposed.add(material); }
+    }
+    this.spriteAssets?.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();
   }

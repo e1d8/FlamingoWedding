@@ -1,3 +1,5 @@
+import {CAMERA_ASCENT_START} from './render/flight-path.js';
+
 const root = document.documentElement;
 const world = document.querySelector('#world');
 const lagoon = document.querySelector('#lagoon');
@@ -10,7 +12,7 @@ const stage = document.querySelector('#stage');
 const progressPath = document.querySelector('#loading-progress');
 
 const INTRO_SECONDS = 2.6;
-const CAMERA_START = 2.2;
+const CAMERA_START = CAMERA_ASCENT_START;
 const CAMERA_END = 6.9;
 const TITLE_START = 6.9;
 const STORY_END = 10.2;
@@ -83,8 +85,8 @@ function revealTitle() {
   title.classList.add('is-revealing');
   title.querySelectorAll('h1 span').forEach((word, index) => {
     animate(word, [
-      {opacity: 0, transform: 'translateY(18px)', filter: 'blur(5px)', clipPath: 'inset(-20% 110% -20% -15%)'},
-      {opacity: 1, transform: 'translateY(0)', filter: 'blur(0)', clipPath: 'inset(-20% -15% -20% -15%)'},
+      {opacity: 0, transform: 'translateY(18px)', filter: 'blur(5px)'},
+      {opacity: 1, transform: 'translateY(0)', filter: 'blur(0)'},
     ], {duration: 2250, delay: 180 + index * 360});
   });
   title.querySelectorAll('.ornament-line').forEach((path, index) => {
@@ -198,6 +200,7 @@ async function initialize() {
     progress(42);
     engine = new LagoonRenderer(stage);
     engine.onContextLost = fallback;
+    engine.onLoadProgress = (loaded, total) => progress(62 + Math.round(30 * loaded / total));
     progress(62);
     await Promise.all([engine.prepare(), document.fonts.load('80px Allura')]);
     if (stopped) return;

@@ -12,6 +12,7 @@ export const fragmentShader = /* glsl */`
   uniform float uViewHeight;
   uniform float uIntro;
   uniform float uImpulse;
+  uniform float uWaterline;
   uniform sampler2D uBirds;
   uniform vec4 uRipples[8];
 
@@ -90,9 +91,9 @@ export const fragmentShader = /* glsl */`
       color += vec3(.10,.069,.04) * pow(max(0.,wave*.7),9.) * nearSurface * .3;
 
       // Actual articulated birds are rendered offscreen and reflected into the water.
-      float waterline = .24;
+      float waterline = uWaterline;
       if(p.y < waterline) {
-        vec2 reflected = vec2(p.x+distortion*1.6,.24+(.24-p.y)/.82);
+        vec2 reflected = vec2(p.x+distortion*1.6,waterline+(waterline-p.y)/.82);
         vec2 uv = vec2(reflected.x/uAspect+.5,(reflected.y-uBottom)/uViewHeight);
         float mask = step(0.,uv.x)*step(uv.x,1.)*step(0.,uv.y)*step(uv.y,1.);
         float silhouette = texture2D(uBirds,clamp(uv,0.,1.)).a;
