@@ -1,6 +1,7 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {SpriteFlamingo, SpriteCouple, loadSpriteAssets, createSpriteFlock} from './sprites.js';
 import {WATERLINE, submergedBodyY} from './water-level.js';
+import {SkyFlights, INTRO_FLOCK_START, INTRO_FLOCK_DURATION} from './sky-flights.js';
 import {vertexShader, fragmentShader} from './atmosphere.js';
 
 const smooth = THREE.MathUtils.smoothstep;
@@ -127,9 +128,10 @@ export class LagoonRenderer {
     this.couple = new SpriteCouple(assets);
     this.solo.viewportWidth = this.aspect;
     this.flock = createSpriteFlock(assets);
+    this.skyFlights = new SkyFlights(assets);
     this.flock.position.z = -1;
     this.birdScene.add(this.solo.group, this.couple.group);
-    this.decorScene.add(this.flock);
+    this.decorScene.add(this.flock, this.skyFlights.group);
     this.solo.update(0);
     await this.renderer.compileAsync(this.background, this.screenCamera);
     await this.renderer.compileAsync(this.birdScene, this.camera);
@@ -193,15 +195,16 @@ export class LagoonRenderer {
       this.dropletMaterial.uniforms.uOpacity.value = 1 - smooth(splash, .25, 1.55);
     }
 
-    const flockAge = story - 5.65;
-    this.flock.visible = flockAge >= 0 && flockAge < 13;
+    const flockAge = story - INTRO_FLOCK_START;
+    this.flock.visible = flockAge >= 0 && flockAge < INTRO_FLOCK_DURATION;
     if (this.flock.visible) {
-      const progress = flockAge / 13;
+      const progress = flockAge / INTRO_FLOCK_DURATION;
       this.flock.position.x = THREE.MathUtils.lerp(-this.aspect*.7-.12, this.aspect*.8+.4, progress);
       this.flock.position.y = 1.65 + progress*.16;
       this.flock.scale.setScalar(1-progress*.37);
-      this.flock.userData.updateSprites(time, smooth(flockAge, 0, 1.4) * (1-smooth(flockAge, 10, 13)) * .68);
+      this.flock.userData.updateSprites(time, smooth(flockAge, 0, 1.4) * (1-smooth(flockAge, INTRO_FLOCK_DURATION - 3, INTRO_FLOCK_DURATION)) * .68);
     }
+    this.skyFlights.update(story, {aspect: this.aspect, camera, viewHeight: this.viewHeight});
     this.reeds[0].rotation.z = Math.sin(time * .31) * .013;
     this.reeds[1].rotation.z = Math.sin(time * .26 + 1) * .01;
 
@@ -243,7 +246,7 @@ export class LagoonRenderer {
       });
     }
     this.target.dispose();
-    for (const material of [...Object.values(this.solo?.materials ?? {}), ...Object.values(this.couple?.materials ?? {}), ...(this.flock?.userData.materials ?? [])]) {
+    for (const material of [...Object.values(this.solo?.materials ?? {}), ...Object.values(this.couple?.materials ?? {}), ...(this.flock?.userData.materials ?? []), ...Object.values(this.skyFlights?.materials ?? {})]) {
       if (!disposed.has(material)) { material.dispose(); disposed.add(material); }
     }
     this.spriteAssets?.dispose();

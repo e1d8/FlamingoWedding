@@ -17,7 +17,7 @@ const INTRO_SECONDS = 2.6;
 const CAMERA_START = CAMERA_ASCENT_START;
 const CAMERA_END = 6.9;
 const TITLE_START = 6.9;
-const STORY_END = 10.2;
+const TITLE_SETTLE_SECONDS = .35;
 const EASE = 'cubic-bezier(.22, .61, .36, 1)';
 const smoothScroll = new SmoothScroll();
 const soundscape = new Soundscape({cameraStart: CAMERA_START, cameraEnd: CAMERA_END, onState(state) {
@@ -34,6 +34,7 @@ let stopped = false;
 let queuedStart = false;
 let didScroll = false;
 let titleShown = false;
+let titleReadyAt = Infinity;
 let touchShown = false;
 let scrollShown = false;
 const animations = new Set();
@@ -91,24 +92,28 @@ function revealTitle() {
   titleShown = true;
   setPhase('title');
   title.classList.add('is-revealing');
-  title.querySelectorAll('h1 span').forEach((word, index) => {
-    const delay = [280, 640, 430][index];
-    animate(word, [
-      {opacity: 0, transform: 'translateY(16px)'},
-      {opacity: 1, transform: 'translateY(0)'},
-    ], {duration: 2050, delay});
+  const revealAnimations = [];
+  const reveal = (...args) => { const animation = animate(...args); revealAnimations.push(animation); return animation; };
+  title.querySelectorAll('.name-stroke').forEach(stroke => {
+    reveal(stroke, [
+      {offset: 0, strokeDashoffset: 1, opacity: 0},
+      {offset: .02, strokeDashoffset: .99, opacity: 1},
+      {offset: 1, strokeDashoffset: 0, opacity: 1},
+    ], {duration: Number(stroke.dataset.duration), delay: Number(stroke.dataset.start), easing: 'linear'});
   });
   title.querySelectorAll('.ornament-line').forEach(path => {
-    animate(path, [{strokeDashoffset: 1, opacity: 0}, {strokeDashoffset: 0, opacity: 1}], {
+    reveal(path, [{strokeDashoffset: 1, opacity: 0}, {strokeDashoffset: 0, opacity: 1}], {
       duration: Number(path.dataset.duration) || 1850, delay: Number(path.dataset.start) || 0,
     });
   });
   title.querySelectorAll('.ornament-accent').forEach(accent => {
-    animate(accent, [{opacity: 0, transform: 'scale(.8)'}, {opacity: 1, transform: 'scale(1)'}], {
+    reveal(accent, [{opacity: 0, transform: 'scale(.8)'}, {opacity: 1, transform: 'scale(1)'}], {
       duration: 800, delay: Number(accent.dataset.start) || 0,
     });
   });
-  animate(title.querySelector('.title-aureole'), [{opacity: 0}, {opacity: 1}], {duration: 2800});
+  reveal(title.querySelector('.title-aureole'), [{opacity: 0}, {opacity: 1}], {duration: 2800});
+  const end = Math.max(...revealAnimations.map(animation => animation.effect.getComputedTiming().endTime));
+  titleReadyAt = clock + end / 1000 + TITLE_SETTLE_SECONDS;
 }
 
 function unlock() {
@@ -149,7 +154,7 @@ function frame(now) {
   }
   if (story >= TITLE_START && !titleShown) revealTitle();
   if (titleShown) camera = 1;
-  if (story >= STORY_END && phase !== 'exploring') unlock();
+  if (titleShown && clock >= titleReadyAt && phase !== 'exploring') unlock();
   if (phase === 'exploring') {
     const progress = smoothScroll.update(elapsed);
     camera = 1 - progress;
@@ -228,7 +233,7 @@ async function initialize() {
     engine.onContextLost = fallback;
     engine.onLoadProgress = (loaded, total) => progress(62 + Math.round(30 * loaded / total));
     progress(62);
-    await Promise.all([engine.prepare(), document.fonts.load('italic 80px "Cormorant Garamond"')]);
+    await engine.prepare();
     if (stopped) return;
     soundscape.setLiftoff(engine.spriteAssets.manifest.timing.liftoff);
     progress(100);
