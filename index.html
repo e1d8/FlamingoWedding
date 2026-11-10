@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#c5b3d1">
+    <meta name="description" content="Sara i Pau. Una història que comença amb un capvespre.">
+    <title>Sara i Pau</title>
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+    <link rel="preload" href="./assets/allura-title.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="./styles.css">
+    <script defer src="./scene.js"></script>
+  </head>
+  <body>
+    <!-- A usable, illustrated invitation is the default, including without JavaScript. -->
+    <svg class="definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="feathers" x1="0" y1="0" x2=".8" y2="1">
+          <stop stop-color="#ffe0d7"/>
+          <stop offset=".46" stop-color="#f4aaa7"/>
+          <stop offset="1" stop-color="#ce7287"/>
+        </linearGradient>
+        <linearGradient id="wing-color" x1="0" y1="0" x2=".8" y2="1">
+          <stop stop-color="#fbc3b8"/>
+          <stop offset=".6" stop-color="#e78e98"/>
+          <stop offset="1" stop-color="#b9617b"/>
+        </linearGradient>
+        <linearGradient id="neck-color" x1="0" y1="0" x2="1" y2=".3">
+          <stop stop-color="#e5939e"/>
+          <stop offset=".55" stop-color="#ffd3c5"/>
+          <stop offset="1" stop-color="#f5b4ac"/>
+        </linearGradient>
+        <linearGradient id="far-mountain" x1="0" y1="0" x2="0" y2="1">
+          <stop stop-color="#ad9db9" stop-opacity=".48"/>
+          <stop offset="1" stop-color="#d5b8c1" stop-opacity=".1"/>
+        </linearGradient>
+        <linearGradient id="reflection-fade" x1="0" y1="0" x2="0" y2="1">
+          <stop stop-color="white" stop-opacity=".55"/>
+          <stop offset="1" stop-color="white" stop-opacity="0"/>
+        </linearGradient>
+        <mask id="reflection-mask" maskContentUnits="objectBoundingBox">
+          <rect width="1" height="1" fill="url(#reflection-fade)"/>
+        </mask>
+        <symbol id="resting-flamingo" viewBox="0 0 320 400">
+          <g class="legs" fill="none" stroke="#b76d86" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M129 251 137 307 133 366 143 367"/>
+            <path d="m151 251 9 48-30 30 5 37 11 1"/>
+            <path d="m137 306 2 3m19-11 2 3" stroke="#965d79" stroke-width="4"/>
+          </g>
+          <g class="bird-breath">
+            <path d="M79 219c-8 5-14 12-26 14 17 7 25 11 40 10" fill="#c77a91"/>
+            <path d="M72 224c9-24 54-38 89-24 19 8 31 21 22 39-8 17-36 27-67 23-27-3-50-17-44-38Z" fill="url(#feathers)"/>
+            <path d="M83 224c23-15 51-18 80-10-12 28-46 38-77 22" fill="url(#wing-color)"/>
+            <path d="M90 228c16 0 34-5 49-11m-43 20c13-1 30-6 40-12" fill="none" stroke="#ffd3c6" stroke-width="1.2" stroke-linecap="round" opacity=".55"/>
+            <g class="bird-neck">
+              <path d="M161 217c28-10 47-30 29-53-12-16-29-24-26-45 2-14 12-24 25-25" fill="none" stroke="url(#neck-color)" stroke-width="15" stroke-linecap="round"/>
+              <path d="M163 214c24-10 42-29 24-50-14-16-27-25-26-44" fill="none" stroke="#ffe1ce" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"/>
+              <g class="bird-head">
+                <path d="M174 92c0-10 12-16 23-13 11 3 15 10 11 19-4 8-17 9-25 5-6-3-9-6-9-11Z" fill="#f9c5b6"/>
+                <path d="M202 88c11 2 18 9 24 20l-5 13-11-7-10-17Z" fill="#fff0d5"/>
+                <path d="m218 101 8 7-5 13-11-7 4-3Z" fill="#62475f"/>
+                <path d="m203 94 12 14" fill="none" stroke="#dba3a8" stroke-width="1"/>
+                <circle class="bird-eye" cx="195" cy="88" r="2.1" fill="#57435b"/>
+                <circle cx="194.5" cy="87.5" r=".55" fill="#fff4db"/>
+              </g>
+            </g>
+          </g>
+        </symbol>
+        <symbol id="flying-flamingo" viewBox="0 0 460 260">
+          <g fill="none" stroke="#ba7289" stroke-width="3" stroke-linecap="round">
+            <path d="m190 151-97 28-33 5"/>
+            <path d="m186 158-83 33-32 3"/>
+          </g>
+          <g class="flight-wing flight-wing-back">
+            <path d="M224 144C182 97 157 38 181 15c3 26 31 48 52 60l24 60Z" fill="#d78094"/>
+            <path d="M181 15c4 24 12 37 27 51l-22-3-12-12-3-14Z" fill="#8e5c79"/>
+          </g>
+          <path d="m172 148-27 4 28 10" fill="#d28296"/>
+          <ellipse cx="213" cy="150" rx="47" ry="21" fill="url(#feathers)"/>
+          <path d="M247 145c38-8 74-17 119-18" fill="none" stroke="url(#neck-color)" stroke-width="12" stroke-linecap="round"/>
+          <ellipse cx="371" cy="125" rx="15" ry="10" fill="#fac4b4"/>
+          <path d="m381 123 20 9-5 11-13-8-7-7" fill="#ffecd1"/>
+          <path d="m395 130 6 2-5 11-9-6" fill="#62475f"/>
+          <circle cx="374" cy="122" r="1.8" fill="#57435b"/>
+          <g class="flight-wing flight-wing-front">
+            <path d="M204 154C179 115 168 64 195 29c4 34 23 65 47 96l-2 29Z" fill="url(#wing-color)"/>
+            <path d="M195 29c1 26 7 42 19 63l-18-8-7-12-5-16Z" fill="#98617e"/>
+            <path d="M198 56c5 26 15 46 27 63" fill="none" stroke="#ffd0bf" stroke-width="2" opacity=".6"/>
+          </g>
+        </symbol>
+        <symbol id="loving-flamingo" viewBox="0 0 600 420">
+          <g fill="none" stroke="#b16f88" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m222 298 5 40-4 56 11 1"/>
+            <path d="m244 298 8 44-22 17 2 35 10 1"/>
+          </g>
+          <g class="loving-breath">
+            <path d="m179 271-27 12 27 7" fill="#c97d94"/>
+            <path d="M173 271c12-21 46-29 74-17 22 9 31 27 18 41-14 16-47 17-70 6-19-9-27-18-22-30Z" fill="url(#feathers)"/>
+            <path d="M183 274c22-13 43-13 63-6-13 22-38 27-60 16" fill="url(#wing-color)"/>
+            <path d="M193 280c14-1 27-5 36-10" fill="none" stroke="#ffdac9" stroke-width="1.3" opacity=".65"/>
+            <g class="loving-neck">
+              <path d="M260 268c25-25-27-43-38-80-9-31 4-58 27-62 17-4 28 3 37 17" fill="none" stroke="url(#neck-color)" stroke-width="14" stroke-linecap="round"/>
+              <path d="M259 265c20-24-31-44-40-78-7-25 1-44 14-53" fill="none" stroke="#ffe3cd" stroke-width="2.8" opacity=".6" stroke-linecap="round"/>
+              <path d="M276 137c5-9 16-8 22 0 3 5 2 11-3 15-5 3-12 0-16-4-3-3-5-7-3-11Z" fill="#fac6b6"/>
+              <path d="m296 142 8 11-5 12-7-8-2-9" fill="#ffeacd"/>
+              <path d="m301 152 3 1-5 12-6-7 4-1" fill="#62475f"/>
+              <circle class="pair-eye" cx="290" cy="140" r="1.6" fill="#63475e"/>
+            </g>
+          </g>
+        </symbol>
+        <symbol id="distant-flamingo" viewBox="0 0 100 60">
+          <path d="m32 36-29 8m32-6L7 49" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M28 34c6-5 20-5 25 0l27-7 7 3-5 3-28 7c-9 4-19 2-26-1Z" fill="currentColor"/>
+          <g class="distant-wing">
+            <path d="M40 36C28 24 27 12 32 3c3 13 16 23 22 29Z" fill="currentColor"/>
+          </g>
+        </symbol>
+      </defs>
+    </svg>
+
+    <main id="invitation" class="invitation" aria-label="Invitació de Sara i Pau">
+      <div id="world" class="world">
+        <div class="sky-wash" aria-hidden="true"></div>
+        <section id="sky" class="sky" aria-label="Sara i Pau">
+          <div class="high-cloud high-cloud-one" aria-hidden="true"></div>
+          <div class="high-cloud high-cloud-two" aria-hidden="true"></div>
+          <div class="title-composition">
+            <svg class="title-ornament ornament-top" viewBox="0 0 180 65" aria-hidden="true">
+              <g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round">
+                <path class="ornament-line" d="M90 56C69 39 58 25 64 17c5-7 16 1 26 13 10-12 21-20 26-13 6 8-5 22-26 39Z"/>
+                <path class="ornament-line" d="M74 44c-23 5-41-1-53-12m85 12c23 5 41-1 53-12M48 41c-1-10-5-14-11-17 0 8 3 13 11 17Zm84 0c1-10 5-14 11-17 0 8-3 13-11 17Z"/>
+              </g>
+            </svg>
+            <h1 id="names" aria-label="Sara i Pau"><span>Sara</span><span class="title-i">i</span><span>Pau</span></h1>
+            <svg class="title-ornament ornament-bottom" viewBox="0 0 220 42" aria-hidden="true">
+              <path class="ornament-line" d="M4 21c40 9 52-16 82-10 18 4 14 17 24 17s6-13 24-17c30-6 42 19 82 10M98 16c5-8 10-8 12-2 2-6 7-6 12 2" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div id="flock" class="flock" aria-hidden="true">
+            <svg class="flock-bird" style="--bird-x:0%;--bird-y:43%;--bird-size:37px;--flap-delay:-.2s" viewBox="0 0 100 60"><use href="#distant-flamingo"/></svg>
+            <svg class="flock-bird" style="--bird-x:15%;--bird-y:26%;--bird-size:33px;--flap-delay:-.7s" viewBox="0 0 100 60"><use href="#distant-flamingo"/></svg>
+            <svg class="flock-bird" style="--bird-x:30%;--bird-y:14%;--bird-size:30px;--flap-delay:-.4s" viewBox="0 0 100 60"><use href="#distant-flamingo"/></svg>
+            <svg class="flock-bird" style="--bird-x:46%;--bird-y:10%;--bird-size:28px;--flap-delay:-1s" viewBox="0 0 100 60"><use href="#distant-flamingo"/></svg>
+            <svg class="flock-bird" style="--bird-x:61%;--bird-y:28%;--bird-size:26px;--flap-delay:-.3s" viewBox="0 0 100 60"><use href="#distant-flamingo"/></svg>
+            <svg class="flock-bird" style="--bird-x:74%;--bird-y:49%;--bird-size:24px;--flap-delay:-.9s" viewBox="0 0 100 60"><use href="#distant-flamingo"/></svg>
+            <svg class="flock-bird" style="--bird-x:87%;--bird-y:72%;--bird-size:22px;--flap-delay:-.5s" viewBox="0 0 100 60"><use href="#distant-flamingo"/></svg>
+          </div>
+        </section>
+
+        <section id="lagoon" class="lagoon" aria-label="Dos flamencs formen un cor al capvespre">
+          <div class="sun-halo" aria-hidden="true"></div>
+          <div class="sun" aria-hidden="true"></div>
+          <div class="horizon-cloud horizon-cloud-one" aria-hidden="true"></div>
+          <div class="horizon-cloud horizon-cloud-two" aria-hidden="true"></div>
+          <svg class="mountains" viewBox="0 0 1600 170" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 85 55 89 133 69 187 82 245 46 307 65 356 57 427 96 508 108 599 131 715 150 900 155 1060 134 1168 104 1230 91 1276 70 1321 83 1382 60 1433 76 1516 62 1600 83V170H0Z" fill="url(#far-mountain)"/>
+            <path d="m0 124 150-5 88 12 85-5 132 21 214 14 405-1 171-16 97 5 137-25 121 4v42H0Z" fill="#beacbd" opacity=".22"/>
+          </svg>
+          <div class="water" aria-hidden="true">
+            <div class="water-light"></div>
+            <svg class="sun-trail" viewBox="0 0 500 600" preserveAspectRatio="none">
+              <g fill="#fff0d1">
+                <path d="M198 3h104l12 3H187Zm-14 11h133l-9 3H192Zm14 15h96l16 3H185Zm-22 14h151l-12 3H187Zm23 17h104l-9 4H185Zm-37 20h166l-17 4H184Zm18 23h135l14 4H161Zm-41 28h198l-21 4H160Zm25 26h143l-15 5H166Zm-52 32h235l-30 4H139Zm31 31h172l18 4H145Zm-63 37h263l-33 4H123Zm34 39h201l-16 4H135Zm-48 40h282l-24 4H111Zm29 44h222l25 4H110Zm-53 44h315l-23 4H84Zm22 51h268l-25 3H106Zm-54 48h355l-33 3H58Zm28 52h299l-13 3H85Z" opacity=".52"/>
+              </g>
+            </svg>
+            <div class="water-shimmer shimmer-one"></div>
+            <div class="water-shimmer shimmer-two"></div>
+            <svg class="water-lines" viewBox="0 0 1400 700" preserveAspectRatio="none">
+              <g fill="none" stroke-linecap="round">
+                <path d="M90 64h148m58 24h85m652-29h187M934 114h83M43 162h200m55-21h66m677 55h231M5 255h121m100 22h155m524-16h142m72 49h198M61 375h160m102 36h121m536-19h207M0 478h97m149 26h160m514-13h219m54 27h206M63 607h193m174 19h114m279-15h128m128 26h218" stroke="#fff1dc" stroke-opacity=".23" stroke-width="1.4"/>
+                <path d="M0 113h141m295 4h93m616 33h255M97 226h160m806-1h203M0 338h169m283 23h89m499-9h201M91 448h171m827-6h178M0 558h190m259 19h106m530-20h275M242 681h173m494-8h155" stroke="#b4a5bb" stroke-opacity=".17" stroke-width="1.2"/>
+              </g>
+            </svg>
+          </div>
+
+          <div class="shore-reeds reeds-left" aria-hidden="true">
+            <svg viewBox="0 0 160 240" fill="none" stroke="currentColor" stroke-linecap="round">
+              <path d="M20 240C31 160 34 70 19 20m15 220C52 170 60 128 86 98M12 240C10 185 6 143 0 128m43 112c16-52 30-87 63-118m-78 82C58 137 44 81 51 48m-6 192c23-32 46-54 83-67" stroke-width="2"/>
+              <path d="M19 25 15 4m71 94 12-17M51 51l1-22m55 93 15-13" stroke-width="5"/>
+            </svg>
+          </div>
+          <div class="shore-reeds reeds-right" aria-hidden="true">
+            <svg viewBox="0 0 160 240" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M18 240C30 155 31 91 15 49m17 191c19-66 36-105 67-132M13 240C7 188 5 151 0 139m42 101c16-31 46-55 79-65M28 212c21-78 21-105 20-144" stroke-width="2"/><path d="m15 50-4-19m88 78 12-14M48 69l-1-22" stroke-width="5"/></svg>
+          </div>
+
+          <div id="solo" class="solo bird-position" aria-hidden="true">
+            <div class="bird-reflection solo-reflection"><svg viewBox="0 0 320 400"><use href="#resting-flamingo"/></svg></div>
+            <svg id="resting-bird" class="resting-bird" viewBox="0 0 320 400"><use href="#resting-flamingo"/></svg>
+            <svg id="flying-bird" class="flying-bird" viewBox="0 0 460 260"><use href="#flying-flamingo"/></svg>
+            <svg class="foot-ripples" viewBox="0 0 320 40" preserveAspectRatio="none"><g fill="none" stroke="#fff0d5" stroke-width="1"><ellipse class="ripple ripple-one" cx="138" cy="17" rx="39" ry="3.5"/><ellipse class="ripple ripple-two" cx="138" cy="17" rx="55" ry="5.5"/></g></svg>
+          </div>
+
+          <div id="couple" class="couple bird-position" role="img" aria-label="Dos flamencs, cara a cara, formen un cor amb els colls">
+            <div class="bird-reflection couple-reflection"><svg viewBox="0 0 600 420"><use href="#loving-flamingo"/><use href="#loving-flamingo" transform="translate(600 0) scale(-1 1)"/></svg></div>
+            <svg class="couple-birds" viewBox="0 0 600 420"><use href="#loving-flamingo"/><use href="#loving-flamingo" transform="translate(600 0) scale(-1 1)"/></svg>
+            <svg class="couple-ripples" viewBox="0 0 600 38" preserveAspectRatio="none"><g fill="none" stroke="#fff0d5" stroke-width="1"><ellipse class="ripple ripple-one" cx="232" cy="16" rx="52" ry="4"/><ellipse class="ripple ripple-two" cx="371" cy="16" rx="53" ry="4"/><ellipse cx="300" cy="20" rx="133" ry="7" opacity=".35"/></g></svg>
+          </div>
+          <div class="water-vignette" aria-hidden="true"></div>
+        </section>
+      </div>
+    </main>
+
+    <button id="begin" class="begin" type="button" aria-label="Comença la invitació de Sara i Pau" hidden>
+      <span id="touch-hint" class="touch-hint" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+    <button id="scroll-hint" class="scroll-hint" type="button" aria-label="Baixa per descobrir els dos flamencs" hidden>
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m8 12 8 8 8-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </body>
+</html>
