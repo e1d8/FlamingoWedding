@@ -3,15 +3,33 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#c5b3d1">
+    <meta name="theme-color" content="#241e2d">
     <meta name="description" content="Sara i Pau. Una història que comença amb un capvespre.">
     <title>Sara i Pau</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
     <link rel="preload" href="./assets/allura-title.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="./styles.css">
-    <script defer src="./scene.js"></script>
+    <script>
+      document.documentElement.classList.add('is-loading', 'is-locked');
+      window.__sceneLoadGuard = setTimeout(() => {
+        document.documentElement.classList.remove('is-loading', 'is-locked');
+        document.documentElement.dataset.phase = 'fallback';
+        const loader = document.getElementById('loader');
+        if (loader) loader.hidden = true;
+        window.dispatchEvent(new Event('scene-load-timeout'));
+      }, 20000);
+    </script>
+    <script type="module" src="./scene.js"></script>
   </head>
   <body>
+    <div id="stage" class="stage" aria-hidden="true"></div>
+    <div id="loader" class="loader" role="progressbar" aria-label="Preparant el capvespre" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <svg class="loading-heart" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="loading-orbit" cx="50" cy="50" r="42" fill="none"/>
+        <path class="loading-heart-track" d="M50 68C26 51 26 30 38 32c6 0 9 6 12 11 3-5 6-11 12-11 12-2 12 19-12 36Z" fill="none"/>
+        <path id="loading-progress" class="loading-heart-progress" d="M50 68C26 51 26 30 38 32c6 0 9 6 12 11 3-5 6-11 12-11 12-2 12 19-12 36Z" fill="none" pathLength="100"/>
+      </svg>
+    </div>
     <!-- A usable, illustrated invitation is the default, including without JavaScript. -->
     <svg class="definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <defs>

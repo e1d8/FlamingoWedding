@@ -112,7 +112,7 @@ html.is-locked { overflow: hidden; overscroll-behavior: none; }
 .is-exploring .world { will-change: auto; }
 .is-enhanced .lagoon { opacity: 0; }
 .is-enhanced .lagoon.is-visible { opacity: 1; }
-html:not(.is-enhanced) * { animation: none !important; }
+html:not(.is-enhanced):not(.is-loading) * { animation: none !important; }
 .is-hidden *, .is-hidden *::before, .is-hidden *::after { animation-play-state: paused !important; }
 .begin { position: fixed; z-index: 10; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; color: #fff2df; cursor: pointer; touch-action: manipulation; }
 .begin:focus-visible { outline: 1px solid #fff5e7aa; outline-offset: -12px; }
@@ -167,3 +167,39 @@ html:not(.is-enhanced) * { animation: none !important; }
 @keyframes touch-pulse { 0% { transform: scale(.65); opacity: 0; } 15% { opacity: .7; } 85%, 100% { transform: scale(1.7); opacity: 0; } }
 @keyframes touch-dot { 0%, 100% { opacity: .4; transform: scale(.8); } 45% { opacity: .9; transform: scale(1); } }
 @keyframes scroll-nudge { 0%, 100% { transform: translateY(-2px); opacity: .45; } 50% { transform: translateY(5px); opacity: 1; } }
+
+/* Cinematic edition. The DOM illustration stays available as the WebGL fallback. */
+:root { --ink: #f0d5ac; }
+html { background: #282330; }
+.stage { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; }
+.stage canvas { display: block; width: 100%; height: 100%; }
+.is-webgl .stage { opacity: 1; }
+.is-webgl .invitation { z-index: 1; pointer-events: none; }
+.is-webgl .sky-wash, .is-webgl .lagoon > *, .is-webgl .high-cloud, .is-webgl .flock { visibility: hidden !important; }
+.is-webgl .sky::after { display: none; }
+.is-webgl .lagoon { opacity: 1; }
+.is-webgl .world { will-change: transform; }
+.is-webgl.is-exploring .world { will-change: auto; }
+.is-webgl h1 { text-shadow: 0 0 50px #e1a37526, 0 2px 1px #191a2c24; }
+.is-webgl .title-composition { padding-bottom: 3%; }
+.is-webgl .title-ornament { color: #d9b080; opacity: .6; }
+.is-webgl .ornament-top { margin-bottom: 12px; }
+.is-webgl .ornament-bottom { margin-top: 10px; }
+.is-webgl .scroll-hint { color: #eed1a5; }
+.is-webgl .touch-hint { color: #f3d3a1; bottom: max(5%, env(safe-area-inset-bottom)); }
+.loader { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 55%, #3b2937, #1b1b29 80%); pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 1.4s ease, visibility 1.4s; }
+.loader[hidden] { display: none; }
+.is-loading .world *, .is-webgl .world *, .is-loading .definitions *, .is-webgl .definitions *, .loader.is-complete * { animation: none !important; }
+.is-loading .loader { opacity: 1; visibility: visible; }
+.loading-heart { width: 90px; height: 90px; color: #e0b080; overflow: visible; }
+.loading-orbit { stroke: #d8a87e; stroke-width: .4; opacity: .17; stroke-dasharray: 2 9; transform-origin: center; animation: loading-orbit 30s linear infinite; }
+.loading-heart-track { stroke: #cb9d7e; stroke-width: .7; opacity: .18; }
+.loading-heart-progress { stroke: #ecc38e; stroke-width: .85; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset .7s ease; }
+.is-loading .loading-heart { animation: loading-breathe 3s ease-in-out infinite; }
+.is-loading .title-composition { visibility: hidden; }
+.is-loading .begin { cursor: progress; }
+@keyframes loading-orbit { to { transform: rotate(360deg); } }
+@keyframes loading-breathe { 0%, 100% { opacity: .6; transform: scale(.96); } 50% { opacity: 1; transform: scale(1.025); } }
+
+/* The original illustration stays legible when WebGL is unavailable. */
+html:not(.is-webgl):not(.is-loading) .title-composition { color: #765976; }

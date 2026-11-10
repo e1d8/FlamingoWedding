@@ -1,215 +1,222 @@
-(() => {
-  'use strict';
+const root = document.documentElement;
+const world = document.querySelector('#world');
+const lagoon = document.querySelector('#lagoon');
+const begin = document.querySelector('#begin');
+const touchHint = document.querySelector('#touch-hint');
+const scrollHint = document.querySelector('#scroll-hint');
+const title = document.querySelector('.title-composition');
+const loader = document.querySelector('#loader');
+const stage = document.querySelector('#stage');
+const progressPath = document.querySelector('#loading-progress');
 
-  const root = document.documentElement;
-  const world = document.querySelector('#world');
-  const lagoon = document.querySelector('#lagoon');
-  const solo = document.querySelector('#solo');
-  const restingBird = document.querySelector('#resting-bird');
-  const flyingBird = document.querySelector('#flying-bird');
-  const couple = document.querySelector('#couple');
-  const begin = document.querySelector('#begin');
-  const touchHint = document.querySelector('#touch-hint');
-  const scrollHint = document.querySelector('#scroll-hint');
-  const title = document.querySelector('.title-composition');
-  const flock = document.querySelector('#flock');
+const INTRO_SECONDS = 2.6;
+const CAMERA_START = 2.2;
+const CAMERA_END = 6.9;
+const TITLE_START = 6.9;
+const STORY_END = 10.2;
+const EASE = 'cubic-bezier(.22, .61, .36, 1)';
+let engine;
+let phase = 'loading';
+let clock = 0;
+let phaseStarted = 0;
+let storyStarted = -1;
+let lastFrame = null;
+let frameId;
+let stopped = false;
+let queuedStart = false;
+let didScroll = false;
+let titleShown = false;
+let touchShown = false;
+let scrollShown = false;
+const animations = new Set();
+const pausedAnimations = new Set();
 
-  // The default HTML remains a static invitation on older browsers or without JS.
-  if (!Element.prototype.animate) return;
+function setPhase(next) {
+  phase = next;
+  phaseStarted = clock;
+  root.dataset.phase = next;
+}
 
-  let phase = 'intro';
-  let queuedStart = false;
-  let didScroll = false;
-  let touchTimer;
-  let scrollTimer;
-  let camera;
-  const animations = new Set();
-  const timers = new Set();
-  const pausedAnimations = new Set();
-  const EASE = 'cubic-bezier(.4, 0, .2, 1)';
+function progress(value) {
+  loader.setAttribute('aria-valuenow', String(value));
+  progressPath.style.strokeDashoffset = String(100 - value);
+}
 
-  // All story delays use visible time, so backgrounding cannot skip a scene.
-  function later(callback, delay) {
-    const timer = { callback, remaining: delay, started: 0, id: null };
-    timer.start = () => {
-      timer.started = performance.now();
-      timer.id = window.setTimeout(() => {
-        timers.delete(timer);
-        timer.id = null;
-        callback();
-      }, timer.remaining);
-    };
-    timers.add(timer);
-    if (!document.hidden) timer.start();
-    return timer;
-  }
-
-  function cancelTimer(timer) {
-    if (!timer) return;
-    window.clearTimeout(timer.id);
-    timers.delete(timer);
-  }
-
-  function animate(element, keyframes, options) {
-    const animation = element.animate(keyframes, { fill: 'both', easing: EASE, ...options });
-    animations.add(animation);
-    // Finished promises are also rejected by cancellation; always handle both paths.
-    animation.finished.then(() => animations.delete(animation), () => animations.delete(animation));
-    if (document.hidden) {
-      animation.pause();
-      pausedAnimations.add(animation);
-    }
-    return animation;
-  }
-
-  function setPhase(next) {
-    phase = next;
-    root.dataset.phase = next;
-  }
-
-  function dismissScrollHint() {
-    if (phase !== 'exploring' || didScroll || window.scrollY < 8) return;
-    didScroll = true;
-    cancelTimer(scrollTimer);
-    scrollHint.hidden = true;
-    scrollHint.classList.remove('is-visible');
-  }
-
-  function unlock() {
-    setPhase('exploring');
-    // Camera is already at zero. Removing the clip reveals more world below it.
-    world.style.transform = 'translateY(0)';
-    camera?.cancel();
-    root.classList.remove('is-locked');
-    root.classList.add('is-exploring');
-    scrollTimer = later(() => {
-      if (didScroll) return;
-      scrollHint.hidden = false;
-      requestAnimationFrame(() => scrollHint.classList.add('is-visible'));
-    }, 5000);
-  }
-
-  function revealSky() {
-    setPhase('title');
-    solo.style.display = 'none';
-    couple.classList.add('is-present');
-    title.classList.add('is-revealing');
-    const words = title.querySelectorAll('h1 span');
-    words.forEach((word, index) => {
-      animate(word, [
-        { opacity: 0, transform: 'translateY(16px)', clipPath: 'inset(0 100% 0 -10%)' },
-        { opacity: 1, transform: 'translateY(0)', clipPath: 'inset(0 -10% 0 -10%)' },
-      ], { duration: index === 1 ? 1300 : 2050, delay: 280 + index * 380 });
-    });
-    title.querySelectorAll('.ornament-line').forEach((path, index) => {
-      animate(path, [{ strokeDashoffset: 300, opacity: 0 }, { strokeDashoffset: 0, opacity: .8 }], {
-        duration: 2200, delay: index * 220,
-      });
-    });
-    animate(flock, [
-      { transform: 'translateX(-110%) translateY(12px) scale(1)', opacity: 0, offset: 0 },
-      { opacity: .5, offset: .12 },
-      { opacity: .48, offset: .55 },
-      { transform: 'translateX(105vw) translateY(-44px) scale(.48)', opacity: 0, offset: 1 },
-    ], { duration: 7200, easing: 'linear' });
-  }
-
-  function startStory() {
-    if (phase === 'intro') {
-      queuedStart = true;
-      return;
-    }
-    if (phase !== 'waiting') return;
-    setPhase('takeoff');
-    cancelTimer(touchTimer);
-    touchHint.classList.remove('is-visible');
-    begin.hidden = true;
-    begin.blur();
-    const reflection = solo.querySelector('.solo-reflection');
-    const ripples = solo.querySelector('.foot-ripples');
-
-    animate(restingBird, [
-      { transform: 'translateY(0) rotate(0)', opacity: 1, offset: 0 },
-      { transform: 'translateY(3px) rotate(-3deg)', opacity: 1, offset: .55 },
-      { transform: 'translateY(-15px) rotate(4deg)', opacity: 0, offset: 1 },
-    ], { duration: 850 });
-    animate(reflection, [{ opacity: .23 }, { opacity: 0 }], { duration: 850, delay: 300 });
-    animate(ripples, [{ opacity: 1, transform: 'scaleX(1)' }, { opacity: 0, transform: 'scaleX(1.8)' }], { duration: 1400, delay: 250 });
-    animate(flyingBird, [
-      { opacity: 0, transform: 'translate(-8%, 12%) scale(.76) rotate(-12deg)', offset: 0 },
-      { opacity: 1, transform: 'translate(0, 0) scale(.85) rotate(-9deg)', offset: .13 },
-      { opacity: 1, transform: 'translate(25vw, -17vh) scale(.85) rotate(-13deg)', offset: .5 },
-      { opacity: 0, transform: 'translate(105vw, -56vh) scale(.5) rotate(-17deg)', offset: 1 },
-    ], { duration: 1850, delay: 500, easing: 'cubic-bezier(.4, 0, .65, 1)' });
-
-    // Percentage keyframes follow the world's height even during an orientation change.
-    camera = animate(world, [
-      { transform: 'translateY(-50%)' },
-      { transform: 'translateY(0)' },
-    ], { duration: 3200, delay: 1200 });
-    later(() => setPhase('ascending'), 1200);
-    later(revealSky, 4400);
-    later(unlock, 7600);
-  }
-
-  // Ignore browser scroll restoration: every new page load starts at the lagoon.
-  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+function fallback() {
+  if (stopped) return;
+  stopped = true;
+  clearTimeout(window.__sceneLoadGuard);
+  cancelAnimationFrame(frameId);
+  animations.forEach(animation => animation.cancel());
+  engine?.dispose();
+  root.classList.remove('is-loading', 'is-locked', 'is-enhanced', 'is-webgl', 'is-exploring');
+  root.dataset.phase = 'fallback';
+  world.style.transform = '';
+  title.classList.remove('is-revealing');
+  begin.hidden = true;
+  scrollHint.hidden = true;
+  loader.hidden = true;
+  document.querySelector('#invitation').removeAttribute('aria-busy');
   window.scrollTo(0, 0);
-  root.classList.add('is-enhanced', 'is-locked');
-  root.classList.toggle('is-hidden', document.hidden);
-  setPhase('intro');
-  begin.hidden = false;
+}
 
-  animate(lagoon, [{ opacity: 0 }, { opacity: 1 }], { duration: 1800 });
-  animate(solo, [
-    { opacity: 0, transform: 'translate(-50%, 10px)' },
-    { opacity: 1, transform: 'translate(-50%, 0)' },
-  ], { duration: 1300, delay: 500 });
+function animate(element, keyframes, options) {
+  const animation = element.animate(keyframes, {fill: 'both', easing: EASE, ...options});
+  animations.add(animation);
+  animation.finished.then(() => animations.delete(animation), () => animations.delete(animation));
+  return animation;
+}
 
-  later(() => {
-    lagoon.classList.add('is-visible');
+function startStory() {
+  if (phase === 'loading' || phase === 'intro') { queuedStart = true; return; }
+  if (phase !== 'waiting') return;
+  storyStarted = clock;
+  setPhase('takeoff');
+  touchHint.classList.remove('is-visible');
+  begin.hidden = true;
+  begin.blur();
+}
+
+function revealTitle() {
+  titleShown = true;
+  setPhase('title');
+  title.classList.add('is-revealing');
+  title.querySelectorAll('h1 span').forEach((word, index) => {
+    animate(word, [
+      {opacity: 0, transform: 'translateY(18px)', filter: 'blur(5px)', clipPath: 'inset(-20% 110% -20% -15%)'},
+      {opacity: 1, transform: 'translateY(0)', filter: 'blur(0)', clipPath: 'inset(-20% -15% -20% -15%)'},
+    ], {duration: 2250, delay: 180 + index * 360});
+  });
+  title.querySelectorAll('.ornament-line').forEach((path, index) => {
+    animate(path, [{strokeDashoffset: 300, opacity: 0}, {strokeDashoffset: 0, opacity: .8}], {
+      duration: 2450, delay: index * 190,
+    });
+  });
+}
+
+function unlock() {
+  world.style.transform = 'translateY(0)';
+  root.classList.remove('is-locked');
+  root.classList.add('is-exploring');
+  setPhase('exploring');
+  lagoon.setAttribute('aria-label', 'Dos flamencs a contrallum formen un cor al capvespre');
+}
+
+function dismissScrollHint() {
+  if (phase !== 'exploring' || didScroll || window.scrollY < 8) return;
+  didScroll = true;
+  scrollHint.hidden = true;
+  scrollHint.classList.remove('is-visible');
+}
+
+function frame(now) {
+  if (stopped || document.hidden) return;
+  if (lastFrame !== null) clock += Math.min((now - lastFrame) / 1000, .1);
+  lastFrame = now;
+  const story = storyStarted < 0 ? -1 : clock - storyStarted;
+  let camera = 0;
+  if (phase === 'intro' && clock - phaseStarted >= INTRO_SECONDS) {
     setPhase('waiting');
     if (queuedStart) startStory();
-    else touchTimer = later(() => touchHint.classList.add('is-visible'), 5000);
-  }, 1800);
-
-  begin.addEventListener('click', startStory);
-  document.addEventListener('keydown', event => {
-    if ((event.code === 'Space' || event.code === 'Enter') && phase !== 'exploring') {
-      event.preventDefault();
-      if (!event.repeat) startStory();
+  }
+  if (phase === 'waiting' && !touchShown && clock - phaseStarted >= 5) {
+    touchShown = true;
+    touchHint.classList.add('is-visible');
+  }
+  if (story >= CAMERA_START && !titleShown) {
+    if (phase === 'takeoff') setPhase('ascending');
+    const p = Math.max(0, Math.min(1, (story - CAMERA_START) / (CAMERA_END - CAMERA_START)));
+    camera = p * p * p * (p * (p * 6 - 15) + 10);
+  }
+  if (story >= TITLE_START && !titleShown) revealTitle();
+  if (titleShown) camera = 1;
+  if (story >= STORY_END && phase !== 'exploring') unlock();
+  if (phase === 'exploring') {
+    camera = 1 - window.scrollY / lagoon.offsetHeight;
+    if (!scrollShown && !didScroll && clock - phaseStarted >= 5) {
+      scrollShown = true;
+      scrollHint.hidden = false;
+      requestAnimationFrame(() => scrollHint.classList.add('is-visible'));
     }
+  } else if (story >= 0) {
+    world.style.transform = `translateY(${(camera - 1) * 50}%)`;
+  }
+  engine.render(clock, {
+    story, camera, intro: Math.min(clock / INTRO_SECONDS, 1), pair: titleShown,
   });
-  window.addEventListener('scroll', dismissScrollHint, { passive: true });
-  scrollHint.addEventListener('click', () => {
-    didScroll = true;
-    cancelTimer(scrollTimer);
-    scrollHint.hidden = true;
-    window.scrollTo({ top: lagoon.offsetTop, behavior: 'smooth' });
-  });
+  frameId = requestAnimationFrame(frame);
+}
 
-  document.addEventListener('visibilitychange', () => {
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+window.scrollTo(0, 0);
+setPhase('loading');
+begin.hidden = false;
+document.querySelector('#invitation').setAttribute('aria-busy', 'true');
+begin.addEventListener('click', startStory);
+document.addEventListener('keydown', event => {
+  if ((event.code === 'Space' || event.code === 'Enter') && phase !== 'exploring' && !stopped) {
+    event.preventDefault();
+    if (!event.repeat) startStory();
+  }
+});
+window.addEventListener('scroll', dismissScrollHint, {passive: true});
+scrollHint.addEventListener('click', () => {
+  didScroll = true;
+  scrollHint.hidden = true;
+  window.scrollTo({top: lagoon.offsetTop, behavior: 'smooth'});
+});
+window.addEventListener('scene-load-timeout', fallback, {once: true});
+document.addEventListener('visibilitychange', () => {
+  root.classList.toggle('is-hidden', document.hidden);
+  if (document.hidden) {
+    cancelAnimationFrame(frameId);
+    animations.forEach(animation => {
+      if (animation.playState === 'running') { animation.pause(); pausedAnimations.add(animation); }
+    });
+  } else if (!stopped && engine && phase !== 'loading') {
+    lastFrame = null;
+    pausedAnimations.forEach(animation => animation.play());
+    pausedAnimations.clear();
+    frameId = requestAnimationFrame(frame);
+  }
+});
+window.addEventListener('pagehide', () => { cancelAnimationFrame(frameId); lastFrame = null; });
+window.addEventListener('pageshow', event => {
+  dismissScrollHint();
+  if (event.persisted && !stopped && engine && !document.hidden) {
+    cancelAnimationFrame(frameId);
+    lastFrame = null;
+    frameId = requestAnimationFrame(frame);
+  }
+});
+
+async function initialize() {
+  try {
+    progress(12);
+    const {LagoonRenderer} = await import('./render/lagoon.js');
+    if (stopped) return;
+    progress(42);
+    engine = new LagoonRenderer(stage);
+    engine.onContextLost = fallback;
+    progress(62);
+    await Promise.all([engine.prepare(), document.fonts.load('80px Allura')]);
+    if (stopped) return;
+    progress(100);
+    await new Promise(resolve => setTimeout(resolve, 450));
+    if (stopped) return;
+    clearTimeout(window.__sceneLoadGuard);
+    root.classList.add('is-enhanced', 'is-webgl', 'is-locked');
+    root.classList.remove('is-loading');
     root.classList.toggle('is-hidden', document.hidden);
-    if (document.hidden) {
-      timers.forEach(timer => {
-        if (timer.id === null) return;
-        window.clearTimeout(timer.id);
-        timer.remaining = Math.max(0, timer.remaining - (performance.now() - timer.started));
-        timer.id = null;
-      });
-      animations.forEach(animation => {
-        if (animation.playState === 'running' || animation.playState === 'pending') {
-          animation.pause();
-          pausedAnimations.add(animation);
-        }
-      });
-    } else {
-      timers.forEach(timer => timer.start());
-      pausedAnimations.forEach(animation => animation.play());
-      pausedAnimations.clear();
-    }
-  });
+    loader.classList.add('is-complete');
+    loader.setAttribute('aria-hidden', 'true');
+    document.querySelector('#invitation').removeAttribute('aria-busy');
+    setPhase('intro');
+    if (!document.hidden) frameId = requestAnimationFrame(frame);
+  } catch (error) {
+    console.warn('La il·lustració estàtica continua disponible.', error);
+    fallback();
+  }
+}
 
-  // Returning from the back-forward cache preserves the completed experience.
-  window.addEventListener('pageshow', dismissScrollHint);
-})();
+initialize();
