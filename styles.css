@@ -46,16 +46,19 @@ button[hidden] { display: none; }
 .high-cloud-one { top: 25%; left: -10%; transform: rotate(-5deg); }
 .high-cloud-two { top: 67%; right: -8%; width: 58%; opacity: .13; animation-delay: -19s; }
 .title-composition { position: absolute; z-index: 2; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 18px 2%; }
-h1 { margin: -2px 0 0; font-family: Allura, 'Snell Roundhand', 'Apple Chancery', cursive; font-weight: 400; font-size: clamp(76px, 17vw, 154px); line-height: 1.35; letter-spacing: -.035em; display: flex; align-items: baseline; justify-content: center; gap: .15em; white-space: nowrap; text-shadow: 0 2px 35px #fff0df42; }
+h1 { margin: -2px 0 0; font-family: Allura, 'Snell Roundhand', 'Apple Chancery', cursive; font-weight: 400; font-size: clamp(72px, 21vw, 156px); line-height: 1.35; letter-spacing: -.02em; display: flex; align-items: baseline; justify-content: center; gap: .18em; white-space: nowrap; text-shadow: 0 2px 35px #fff0df42; }
 /* Allura's swashes extend past the advance width. Keep them inside each animated
    paint box, without changing the spacing or the title's overall footprint. */
 h1 > span { padding: .08em .32em; margin: -.08em -.32em; overflow: visible; }
-.title-i { font-size: .65em; }
+.title-i { font-size: .57em; }
 h1 > .title-i { margin-inline: -.285em; }
-.title-ornament { width: clamp(115px, 29vw, 178px); overflow: visible; opacity: .63; }
-.ornament-top { margin-bottom: 3px; }
-.ornament-bottom { margin-top: 7px; width: clamp(150px, 37vw, 210px); }
-.ornament-line { stroke-dasharray: 300; stroke-dashoffset: 0; }
+.title-aureole { position: absolute; z-index: -2; left: 50%; top: 50%; width: min(90vw, 760px); height: 42%; transform: translate(-50%, -50%); background: radial-gradient(ellipse, #edc39318, transparent 68%); pointer-events: none; }
+.title-frame { position: absolute; z-index: -1; left: 50%; top: 49%; width: clamp(290px, 88vw, 740px); height: clamp(280px, 76vw, 470px); transform: translate(-50%, -50%); color: #d6b38e; opacity: .27; overflow: visible; pointer-events: none; }
+.title-ornament { width: clamp(170px, 49vw, 240px); overflow: visible; opacity: .8; }
+.ornament-top { margin-bottom: 8px; }
+.ornament-bottom { margin-top: 12px; width: clamp(205px, 60vw, 310px); }
+.ornament-line { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.ornament-accent { transform-box: fill-box; transform-origin: center; }
 .flock { position: absolute; top: 21%; left: 0; width: clamp(210px, 54vw, 420px); height: 95px; color: #8a6d8a; opacity: 0; pointer-events: none; z-index: 1; }
 .flock-bird { position: absolute; left: var(--bird-x); top: var(--bird-y); width: var(--bird-size); height: auto; overflow: visible; }
 .distant-wing { transform-box: view-box; transform-origin: 45px 35px; animation: distant-flap 1.3s ease-in-out infinite; animation-delay: var(--flap-delay, 0s); }
@@ -149,8 +152,9 @@ html:not(.is-enhanced):not(.is-loading) * { animation: none !important; }
   .bird-position { bottom: 13%; }
   .sun { width: 17vh; }
   h1 { font-size: min(20vh, 110px); }
-  .title-ornament { width: 100px; }
-  .ornament-bottom { width: 140px; }
+  .title-ornament { width: min(34vh, 150px); }
+  .ornament-bottom { width: min(42vh, 180px); }
+  .title-frame { width: min(75vw, 590px); height: 86vh; }
   .flock { top: 14%; height: 55px; }
 }
 
@@ -186,11 +190,11 @@ html { background: #282330; }
 .is-webgl .lagoon { opacity: 1; }
 .is-webgl .world { will-change: transform; }
 .is-webgl.is-exploring .world { will-change: auto; }
-.is-webgl h1 { text-shadow: 0 0 50px #e1a37526, 0 2px 1px #191a2c24; }
+.is-webgl h1 { color: #f6e3c9; text-shadow: 0 0 45px #e1a37518, 0 2px 1px #191a2c24; }
 .is-webgl .title-composition { padding-bottom: 3%; }
-.is-webgl .title-ornament { color: #d9b080; opacity: .6; }
+.is-webgl .title-ornament { color: #e2bd91; opacity: .8; }
 .is-webgl .ornament-top { margin-bottom: 12px; }
-.is-webgl .ornament-bottom { margin-top: 10px; }
+.is-webgl .ornament-bottom { color: #d6afa2; margin-top: 12px; opacity: .72; }
 .is-webgl .scroll-hint { color: #eed1a5; }
 .is-webgl .touch-hint { color: #f3d3a1; bottom: max(5%, env(safe-area-inset-bottom)); }
 .loader { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 55%, #3b2937, #1b1b29 80%); pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 1.4s ease, visibility 1.4s; }

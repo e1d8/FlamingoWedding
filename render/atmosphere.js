@@ -66,8 +66,12 @@ export const fragmentShader = /* glsl */`
     if(p.y > horizon) {
       float farRidge = mountain(p,.065,8.,8.);
       float midRidge = mountain(p,.035,15.,17.);
-      color = mix(color,vec3(.58,.39,.43),farRidge*.39);
-      color = mix(color,vec3(.43,.33,.39),midRidge*.38);
+      // Atmospheric color is baked against the sky, not the previously painted ridge.
+      // Each solid silhouette occludes the one behind it, including at intersections.
+      vec3 farColor = mix(color,vec3(.58,.39,.43),.39);
+      vec3 midColor = mix(color,vec3(.43,.33,.39),.38);
+      color = mix(color,farColor,farRidge);
+      color = mix(color,midColor,midRidge);
       color += vec3(.14,.065,.025)*exp(-abs(p.y-horizon)*85.);
     } else {
       float depth = horizon-p.y;
@@ -79,6 +83,21 @@ export const fragmentShader = /* glsl */`
       color = mix(vec3(.72,.43,.40),vec3(.20,.23,.30),smoothstep(0.,.65,depth));
       color = mix(color,sky(vec2(p.x+distortion,2.*horizon-p.y))*.73,.22);
       color += vec3(.055,.025,.03) * (wave*.24 + swells*.3);
+      // Calm capillary waves: perspective compresses the distant surface while
+      // longer foreground crests drift in different directions without a tiled grid.
+      float surfaceZ = log(1.+depth*18.)*31.;
+      float lateral = p.x/(depth+.14);
+      float wandering = noise(vec2(lateral*2.4+uTime*.009,surfaceZ*.09));
+      float longRipple = sin(surfaceZ+sin(lateral*2.1+uTime*.085)*.52-uTime*.21);
+      float smallRipple = sin(surfaceZ*2.37+lateral*.85+wandering*2.4+uTime*.29);
+      float fineRipple = sin(surfaceZ*5.1+lateral*2.6-wandering*3.-uTime*.19);
+      float surfaceSlope = longRipple*.58+smallRipple*.29+fineRipple*.13;
+      float fragments = noise(vec2(lateral*19.+uTime*.018,surfaceZ*.6-uTime*.035));
+      float silk = smoothstep(.55,.96,smallRipple*.78+fineRipple*.22)*smoothstep(.32,.72,fragments);
+      float nearWater = smoothstep(.008,.16,depth);
+      color += vec3(.075,.052,.064)*surfaceSlope*nearWater*.32;
+      color += vec3(.12,.082,.065)*silk*nearWater*.27;
+      color -= vec3(.021,.017,.026)*(1.-smoothstep(-.87,-.22,surfaceSlope))*nearWater*.22;
       float breadth = .018 + depth*.245;
       float path = exp(-pow(abs(p.x+distortion*2.)/breadth,1.65));
       float bands = sin(perspective*11.+uTime*.58 + sin(p.x*32.+p.y*13.)*.15);
@@ -107,6 +126,7 @@ export const fragmentShader = /* glsl */`
         float age = uTime-ripple.z;
         if(age>0. && age<5.) {
           vec2 delta = (p-vec2(ripple.x,ripple.y))*vec2(1.,5.8);
+          delta.y += sin(delta.x*67.+uTime*.35)*.0025*min(age,1.5);
           float radius = age*.052;
           float ring = exp(-pow((length(delta)-radius)/(.0018+age*.0007),2.));
           color += vec3(.30,.22,.13)*ring*exp(-age*.82)*ripple.w;

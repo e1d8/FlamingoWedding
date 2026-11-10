@@ -89,16 +89,23 @@ function revealTitle() {
   setPhase('title');
   title.classList.add('is-revealing');
   title.querySelectorAll('h1 span').forEach((word, index) => {
+    const delay = [280, 640, 430][index];
     animate(word, [
-      {opacity: 0, transform: 'translateY(18px)'},
+      {opacity: 0, transform: 'translateY(16px)'},
       {opacity: 1, transform: 'translateY(0)'},
-    ], {duration: 2250, delay: 180 + index * 360});
+    ], {duration: 2050, delay});
   });
-  title.querySelectorAll('.ornament-line').forEach((path, index) => {
-    animate(path, [{strokeDashoffset: 300, opacity: 0}, {strokeDashoffset: 0, opacity: .8}], {
-      duration: 2450, delay: index * 190,
+  title.querySelectorAll('.ornament-line').forEach(path => {
+    animate(path, [{strokeDashoffset: 1, opacity: 0}, {strokeDashoffset: 0, opacity: 1}], {
+      duration: Number(path.dataset.duration) || 1850, delay: Number(path.dataset.start) || 0,
     });
   });
+  title.querySelectorAll('.ornament-accent').forEach(accent => {
+    animate(accent, [{opacity: 0, transform: 'scale(.8)'}, {opacity: 1, transform: 'scale(1)'}], {
+      duration: 800, delay: Number(accent.dataset.start) || 0,
+    });
+  });
+  animate(title.querySelector('.title-aureole'), [{opacity: 0}, {opacity: 1}], {duration: 2800});
 }
 
 function unlock() {
