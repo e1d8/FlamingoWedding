@@ -19,7 +19,10 @@ const CAMERA_END = 6.9;
 const TITLE_START = 6.9;
 const TITLE_SETTLE_SECONDS = .35;
 const EASE = 'cubic-bezier(.22, .61, .36, 1)';
-const smoothScroll = new SmoothScroll();
+// The native spacer is one scene + the dynamic viewport. Its intended travel
+// is exactly one scene; measuring scrollHeight - innerHeight during Safari's
+// toolbar animation can oscillate and trigger scrollTo() inside a touch scroll.
+const smoothScroll = new SmoothScroll({measure: () => lagoon.offsetHeight});
 const soundscape = new Soundscape({cameraStart: CAMERA_START, cameraEnd: CAMERA_END, onState(state) {
   root.dataset.audioState = state;
 }});
@@ -226,7 +229,7 @@ window.addEventListener('pageshow', event => {
 async function initialize() {
   try {
     progress(12);
-    const {LagoonRenderer} = await import('./render/lagoon.js?v=flamingos-20261110-7');
+    const {LagoonRenderer} = await import('./render/lagoon.js?v=safari-scroll-20261110-8');
     if (stopped) return;
     progress(42);
     engine = new LagoonRenderer(stage);

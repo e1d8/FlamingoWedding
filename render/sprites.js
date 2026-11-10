@@ -1,6 +1,6 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {flightOffset} from './flight-path.js';
-import {IdleMotion} from './idle-motion.js?v=flamingos-20261110-7';
+import {IdleMotion} from './idle-motion.js?v=safari-scroll-20261110-8';
 
 const smooth = (a, b, t) => THREE.MathUtils.smoothstep(t, a, b);
 const directory = new URL('../assets/flamingo/', import.meta.url);

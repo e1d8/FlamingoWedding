@@ -1,7 +1,7 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {SpriteFlamingo, SpriteCouple, loadSpriteAssets, createSpriteFlock} from './sprites.js?v=flamingos-20261110-7';
+import {SpriteFlamingo, SpriteCouple, loadSpriteAssets, createSpriteFlock} from './sprites.js?v=safari-scroll-20261110-8';
 import {WATERLINE, submergedBodyY} from './water-level.js';
-import {SkyFlights, INTRO_FLOCK_START, INTRO_FLOCK_DURATION} from './sky-flights.js?v=flamingos-20261110-7';
+import {SkyFlights, INTRO_FLOCK_START, INTRO_FLOCK_DURATION} from './sky-flights.js?v=safari-scroll-20261110-8';
 import {vertexShader, fragmentShader} from './atmosphere.js';
 
 const smooth = THREE.MathUtils.smoothstep;
@@ -40,6 +40,7 @@ function makeReeds(side) {
 export class LagoonRenderer {
   constructor(container) {
     this.container = container;
+    this.lagoon = document.querySelector('#lagoon');
     this.renderer = new THREE.WebGLRenderer({alpha: false, antialias: true, powerPreference: 'high-performance'});
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.65));
     this.renderer.autoClear = false;
@@ -91,20 +92,37 @@ export class LagoonRenderer {
     this.droplets.frustumCulled = false;
     this.decorScene.add(this.droplets);
     this.resize();
+    this.applyResize();
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(container);
-    this.resizeObserver.observe(document.querySelector('#lagoon'));
+    this.resizeObserver.observe(this.lagoon);
   }
 
   resize() {
+    // ResizeObserver runs after animation callbacks. Resizing the drawing buffer
+    // here would leave a blank canvas for Safari's compositor until the next RAF.
+    this.resizePending = true;
+  }
+
+  applyResize() {
+    if (!this.resizePending || this.disposed) return false;
+    this.resizePending = false;
     const width = this.container.clientWidth;
     const height = this.container.clientHeight;
-    const sceneHeight = document.querySelector('#lagoon').offsetHeight || height;
+    const sceneHeight = this.lagoon.offsetHeight || height;
+    if (width <= 0 || height <= 0) return false;
+    const previous = this.renderSize;
+    if (previous && width === previous.width && height === previous.height && sceneHeight === previous.sceneHeight) return false;
+    this.renderSize = {width, height, sceneHeight};
     this.aspect = width / sceneHeight;
     this.viewHeight = height / sceneHeight;
-    this.renderer.setSize(width, height);
-    const ratio = this.renderer.getPixelRatio();
-    this.target.setSize(Math.round(width * ratio * .75), Math.round(height * ratio * .75));
+    if (!previous || width !== previous.width || height !== previous.height) {
+      // Keep CSS at 100% while the browser chrome moves. The buffer changes only
+      // for real size changes, immediately followed by a complete scene render.
+      this.renderer.setSize(width, height, false);
+      const ratio = this.renderer.getPixelRatio();
+      this.target.setSize(Math.round(width * ratio * .75), Math.round(height * ratio * .75));
+    }
     this.uniforms.uAspect.value = this.aspect;
     this.uniforms.uViewHeight.value = this.viewHeight;
     this.camera.left = -this.aspect / 2;
@@ -116,6 +134,7 @@ export class LagoonRenderer {
     this.reeds[1].position.x = this.aspect / 2 - .018;
     // A landscape phone gets the same illustration with a wider, slightly smaller bird.
     this.birdScale = this.aspect > 1.6 ? .00093 : .00108;
+    return true;
   }
 
   async prepare() {
@@ -145,6 +164,9 @@ export class LagoonRenderer {
   }
 
   render(time, {story, camera, intro, pair}) {
+    if (this.disposed) return;
+    this.applyResize();
+    if (!this.renderSize) return;
     this.uniforms.uTime.value = time;
     this.uniforms.uBottom.value = camera;
     this.uniforms.uIntro.value = intro;

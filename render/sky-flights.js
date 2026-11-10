@@ -1,5 +1,5 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {SpriteFlamingo, createFlightMaterials} from './sprites.js?v=flamingos-20261110-7';
+import {SpriteFlamingo, createFlightMaterials} from './sprites.js?v=safari-scroll-20261110-8';
 
 export const INTRO_FLOCK_START = 5.65;
 export const INTRO_FLOCK_DURATION = 13;
