@@ -1,4 +1,5 @@
 import {CAMERA_ASCENT_START} from './render/flight-path.js';
+import {Soundscape} from './audio/soundscape.js';
 
 const root = document.documentElement;
 const world = document.querySelector('#world');
@@ -17,6 +18,9 @@ const CAMERA_END = 6.9;
 const TITLE_START = 6.9;
 const STORY_END = 10.2;
 const EASE = 'cubic-bezier(.22, .61, .36, 1)';
+const soundscape = new Soundscape({cameraStart: CAMERA_START, cameraEnd: CAMERA_END, onState(state) {
+  root.dataset.audioState = state;
+}});
 let engine;
 let phase = 'loading';
 let clock = 0;
@@ -50,6 +54,7 @@ function fallback() {
   clearTimeout(window.__sceneLoadGuard);
   cancelAnimationFrame(frameId);
   animations.forEach(animation => animation.cancel());
+  soundscape.dispose();
   engine?.dispose();
   root.classList.remove('is-loading', 'is-locked', 'is-enhanced', 'is-webgl', 'is-exploring');
   root.dataset.phase = 'fallback';
@@ -85,8 +90,8 @@ function revealTitle() {
   title.classList.add('is-revealing');
   title.querySelectorAll('h1 span').forEach((word, index) => {
     animate(word, [
-      {opacity: 0, transform: 'translateY(18px)', filter: 'blur(5px)'},
-      {opacity: 1, transform: 'translateY(0)', filter: 'blur(0)'},
+      {opacity: 0, transform: 'translateY(18px)'},
+      {opacity: 1, transform: 'translateY(0)'},
     ], {duration: 2250, delay: 180 + index * 360});
   });
   title.querySelectorAll('.ornament-line').forEach((path, index) => {
@@ -146,6 +151,7 @@ function frame(now) {
   engine.render(clock, {
     story, camera, intro: Math.min(clock / INTRO_SECONDS, 1), pair: titleShown,
   });
+  soundscape.update(story, camera);
   frameId = requestAnimationFrame(frame);
 }
 
@@ -155,6 +161,10 @@ setPhase('loading');
 begin.hidden = false;
 document.querySelector('#invitation').setAttribute('aria-busy', 'true');
 begin.addEventListener('click', startStory);
+const activateSound = () => soundscape.activate();
+document.addEventListener('pointerdown', activateSound, {capture: true, passive: true});
+document.addEventListener('click', activateSound, {capture: true});
+document.addEventListener('keydown', activateSound, {capture: true});
 document.addEventListener('keydown', event => {
   if ((event.code === 'Space' || event.code === 'Enter') && phase !== 'exploring' && !stopped) {
     event.preventDefault();
@@ -169,6 +179,7 @@ scrollHint.addEventListener('click', () => {
 });
 window.addEventListener('scene-load-timeout', fallback, {once: true});
 document.addEventListener('visibilitychange', () => {
+  soundscape.setHidden(document.hidden);
   root.classList.toggle('is-hidden', document.hidden);
   if (document.hidden) {
     cancelAnimationFrame(frameId);
@@ -182,8 +193,9 @@ document.addEventListener('visibilitychange', () => {
     frameId = requestAnimationFrame(frame);
   }
 });
-window.addEventListener('pagehide', () => { cancelAnimationFrame(frameId); lastFrame = null; });
+window.addEventListener('pagehide', () => { soundscape.setHidden(true); cancelAnimationFrame(frameId); lastFrame = null; });
 window.addEventListener('pageshow', event => {
+  soundscape.setHidden(document.hidden);
   dismissScrollHint();
   if (event.persisted && !stopped && engine && !document.hidden) {
     cancelAnimationFrame(frameId);
@@ -204,6 +216,7 @@ async function initialize() {
     progress(62);
     await Promise.all([engine.prepare(), document.fonts.load('80px Allura')]);
     if (stopped) return;
+    soundscape.setLiftoff(engine.spriteAssets.manifest.timing.liftoff);
     progress(100);
     await new Promise(resolve => setTimeout(resolve, 450));
     if (stopped) return;
@@ -222,4 +235,6 @@ async function initialize() {
   }
 }
 
+soundscape.prepare();
+soundscape.activate();
 initialize();

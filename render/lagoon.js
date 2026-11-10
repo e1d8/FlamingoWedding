@@ -8,18 +8,24 @@ const smooth = THREE.MathUtils.smoothstep;
 function makeReeds(side) {
   const group = new THREE.Group();
   const material = new THREE.MeshBasicMaterial({color: 0x26232d, side: THREE.DoubleSide, transparent: true, opacity: .8});
+  const random = (i, channel) => {
+    const value = Math.sin((i + 1) * 127.1 + side * 83.7 + channel * 269.5) * 43758.5453;
+    return value - Math.floor(value);
+  };
   for (let i = 0; i < 16; i++) {
-    const seed = Math.sin(i * 23.1 + side * 8.6) * .5 + .5;
-    const base = (i / 16 - .5) * .18;
-    const height = .045 + seed * .16;
-    const bend = (seed - .5) * .12;
+    // Unequal clumps leave small gaps instead of an evenly planted row.
+    const cluster = i < (side < 0 ? 10 : 7) ? -.052 : .048;
+    const base = cluster + (random(i, 0) - .5) * .07;
+    const height = .045 + random(i, 1) * .16;
+    const bend = (random(i, 2) - .5) * .12;
+    const halfWidth = .0008 + random(i, 3) * .001;
     const path = new THREE.Shape();
-    path.moveTo(base-.0013, -.04);
-    path.bezierCurveTo(base-.003, height*.28, base+bend*.6-.001, height*.8, base+bend, height);
-    path.bezierCurveTo(base+bend*.6+.001, height*.79, base+.003, height*.28, base+.0013, -.04);
+    path.moveTo(base-halfWidth, -.04);
+    path.bezierCurveTo(base-halfWidth*2, height*.28, base+bend*.6-halfWidth*.7, height*.8, base+bend, height);
+    path.bezierCurveTo(base+bend*.6+halfWidth*.7, height*.79, base+halfWidth*2, height*.28, base+halfWidth, -.04);
     const mesh = new THREE.Mesh(new THREE.ShapeGeometry(path, 12), material);
     group.add(mesh);
-    if (i % 3 === 0) {
+    if (random(i, 4) > .67) {
       const leaf = new THREE.Shape();
       leaf.moveTo(base+bend*.4, height*.55);
       leaf.quadraticCurveTo(base+bend+.03*side,height*.8,base+bend+.043*side,height*.86);
@@ -67,6 +73,8 @@ export class LagoonRenderer {
     this.background.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.backgroundMaterial));
     this.assetAbort = new AbortController();
     this.reeds = [makeReeds(-1), makeReeds(1)];
+    this.reeds[1].scale.set(.88, .81, 1);
+    this.reeds[1].position.y = -.008;
     this.reeds.forEach(reed => this.decorScene.add(reed));
     this.clip = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -WATERLINE)];
     this.dropletPositions = new Float32Array(54 * 3);

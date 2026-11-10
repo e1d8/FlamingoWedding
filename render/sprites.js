@@ -161,6 +161,7 @@ export class SpriteFlamingo extends AtlasSprite {
 
 export function createSpriteFlock(assets) {
   const group = new THREE.Group();
+  // Share the hero bird's current 16-pose flight atlas, with independent wingbeat phases.
   const materials = Object.fromEntries(assets.textures.flight.map((texture, i) => [`flight:${i}`, silhouetteMaterial(texture)]));
   materials['takeoff:0'] = materials['flight:0'];
   const birds = [];
