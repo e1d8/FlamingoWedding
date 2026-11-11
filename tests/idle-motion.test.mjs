@@ -14,9 +14,9 @@ test('idle motion continues from the clicked pose and fades out before the autho
   assert.ok(waiting.length() > 0);
   bird.update(17, 0);
   assert.deepEqual(bird.idleMotion.uniform.value, waiting);
-  bird.update(17, manifest.timing.hold / 2);
+  bird.update(17, bird.timing.hold / 2);
   assert.ok(Math.abs(bird.idleMotion.uniform.value.length() / waiting.length() - .5) < 1e-10);
-  for (const story of [manifest.timing.hold, .8, 1.3, 1.8, 2.8]) {
+  for (const story of [bird.timing.hold, .8, 1.3, 1.8, 2.8]) {
     bird.update(17, story);
     assert.equal(bird.idleMotion.uniform.value.length(), 0, 'never bend authored running or flying contours');
   }

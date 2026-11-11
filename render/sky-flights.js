@@ -1,7 +1,8 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {SpriteFlamingo, createFlightMaterials} from './sprites.js?v=safari-scroll-20261110-8';
+import {CAMERA_ASCENT_END, CAMERA_SPEED} from './flight-path.js?v=presentation-20261111-10';
+import {SpriteFlamingo, createFlightMaterials} from './sprites.js?v=presentation-20261111-10';
 
-export const INTRO_FLOCK_START = 5.65;
+export const INTRO_FLOCK_START = CAMERA_ASCENT_END - 1.25 / CAMERA_SPEED;
 export const INTRO_FLOCK_DURATION = 13;
 export const INTRO_FLOCK_END = INTRO_FLOCK_START + INTRO_FLOCK_DURATION;
 

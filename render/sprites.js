@@ -1,12 +1,12 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {flightOffset} from './flight-path.js';
-import {IdleMotion} from './idle-motion.js?v=safari-scroll-20261110-8';
+import {DEPARTURE_SPEED, departureTiming, flightOffset} from './flight-path.js?v=presentation-20261111-10';
+import {IdleMotion} from './idle-motion.js?v=presentation-20261111-10';
 
 const smooth = (a, b, t) => THREE.MathUtils.smoothstep(t, a, b);
 const directory = new URL('../assets/flamingo/', import.meta.url);
 
-export function spriteFrame(story, manifest) {
-  const {hold, takeoffFps, flightFps} = manifest.timing;
+export function spriteFrame(story, manifest, timing = departureTiming(manifest.timing)) {
+  const {hold, takeoffFps, flightFps} = timing;
   if (story < hold) return {sheet: 'takeoff', frame: 0};
   const elapsed = story - hold;
   const duration = manifest.takeoff.frames.length / takeoffFps;
@@ -152,23 +152,24 @@ export class SpriteCouple extends AtlasSprite {
 export class SpriteFlamingo extends AtlasSprite {
   constructor(assets, sharedMaterials, {idle = false} = {}) {
     super(assets, ['takeoff', 'flight'], sharedMaterials, idle ? {columns: 44, rows: 52} : {});
+    this.timing = departureTiming(assets.manifest.timing);
     if (idle) this.idleMotion = new IdleMotion(this.materials['takeoff:0']);
     this.flightLeftReach = Math.max(...assets.manifest.flight.frames.map(frame => (frame.pivot[0] - frame.bounds[0]) * frame.unitScale));
     this.viewportWidth = 1;
   }
 
   update(time, story = -1, x = 0, bodyY = .454, scale = .00108) {
-    const state = spriteFrame(story, this.assets.manifest);
+    const state = spriteFrame(story, this.assets.manifest, this.timing);
     this.setFrame(state.sheet, state.frame);
-    this.idleMotion?.update(time, story < 0 ? 1 : 1 - smooth(0, this.assets.manifest.timing.hold, story));
-    const {liftoff: lift, hold, takeoffFps} = this.assets.manifest.timing;
+    this.idleMotion?.update(time, story < 0 ? 1 : 1 - smooth(0, this.timing.hold, story));
+    const {liftoff: lift, hold, takeoffFps} = this.timing;
     const offset = flightOffset(story, {
       runStart: hold + 4 / takeoffFps, liftoff: lift, scale,
       exitDistance: this.viewportWidth / 2 + this.flightLeftReach * scale * .8 + .04 - x,
     });
     this.group.position.set(x + offset.x, bodyY + offset.y, 0);
     this.group.scale.setScalar(scale);
-    this.mesh.scale.setScalar(1 - .2 * smooth(lift, lift + .9, story));
+    this.mesh.scale.setScalar(1 - .2 * smooth(lift, lift + .9 / DEPARTURE_SPEED, story));
     // Running and flying contours come entirely from the authored poses.
     this.group.rotation.z = 0;
   }

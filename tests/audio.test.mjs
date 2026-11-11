@@ -115,12 +115,18 @@ test('quiet pools leave long rests, vary gently, avoid immediate repeats and pau
 
 test('departure effects fire once, and late audio activation skips old effects', async t => {
   const sound = setup(t);
-  const events = [];
-  sound.play = (...args) => { if (args[0] !== 'ascent') events.push(args); return {}; };
+  sound.setLiftoff(1.03 / 1.5, 1.5);
+  const events = [], playedAt = [];
+  sound.play = (...args) => {
+    if (args[0] !== 'ascent') { events.push(args); playedAt.push({name: args[0], story: sound.story}); }
+    return {};
+  };
   sound.activate();
   for (let story = 0; story < 3; story += .02) sound.update(story, 0);
   assert.equal(events.length, 7);
   assert.equal(events.filter(([name]) => name === 'wing').length, 3);
+  assert.ok(playedAt.filter(e => ['water-1', 'water-2'].includes(e.name)).every(e => e.story < sound.liftoff), 'footstep sounds precede the faster liftoff');
+  assert.ok(playedAt.every(e => e.story < 2), 'all departure effects finish before the bird leaves the frame');
   sound.update(7, 1);
   sound.update(12, 0);
   assert.equal(events.length, 7);

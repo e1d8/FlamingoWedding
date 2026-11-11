@@ -1,5 +1,5 @@
-import {CAMERA_ASCENT_START} from './render/flight-path.js';
-import {Soundscape} from './audio/soundscape.js';
+import {CAMERA_ASCENT_START, CAMERA_ASCENT_END, DEPARTURE_SPEED} from './render/flight-path.js?v=presentation-20261111-10';
+import {Soundscape} from './audio/soundscape.js?v=presentation-20261111-10';
 import {SmoothScroll} from './motion/smooth-scroll.js';
 
 const root = document.documentElement;
@@ -15,8 +15,10 @@ const progressPath = document.querySelector('#loading-progress');
 
 const INTRO_SECONDS = 2.6;
 const CAMERA_START = CAMERA_ASCENT_START;
-const CAMERA_END = 6.9;
-const TITLE_START = 6.9;
+const CAMERA_END = CAMERA_ASCENT_END;
+const TITLE_START = CAMERA_END;
+const TITLE_ANIMATION_SPEED = 1.5;
+const HINT_DELAY_SECONDS = .5;
 const TITLE_SETTLE_SECONDS = .35;
 const EASE = 'cubic-bezier(.22, .61, .36, 1)';
 // The native spacer is one scene + the dynamic viewport. Its intended travel
@@ -96,13 +98,20 @@ function revealTitle() {
   setPhase('title');
   title.classList.add('is-revealing');
   const revealAnimations = [];
-  const reveal = (...args) => { const animation = animate(...args); revealAnimations.push(animation); return animation; };
-  title.querySelectorAll('.name-stroke').forEach(stroke => {
-    reveal(stroke, [
-      {offset: 0, strokeDashoffset: 1, opacity: 0},
-      {offset: .02, strokeDashoffset: .99, opacity: 1},
-      {offset: 1, strokeDashoffset: 0, opacity: 1},
-    ], {duration: Number(stroke.dataset.duration), delay: Number(stroke.dataset.start), easing: 'linear'});
+  const reveal = (element, keyframes, options) => {
+    const animation = animate(element, keyframes, {
+      ...options,
+      duration: options.duration / TITLE_ANIMATION_SPEED,
+      delay: (options.delay || 0) / TITLE_ANIMATION_SPEED,
+    });
+    revealAnimations.push(animation);
+    return animation;
+  };
+  title.querySelectorAll('.name-word').forEach(word => {
+    reveal(word, [
+      {opacity: 0, transform: 'translateY(16px)'},
+      {opacity: 1, transform: 'translateY(0)'},
+    ], {duration: 2050, delay: Number(word.dataset.start)});
   });
   title.querySelectorAll('.ornament-line').forEach(path => {
     reveal(path, [{strokeDashoffset: 1, opacity: 0}, {strokeDashoffset: 0, opacity: 1}], {
@@ -146,7 +155,7 @@ function frame(now) {
     setPhase('waiting');
     if (queuedStart) startStory();
   }
-  if (phase === 'waiting' && !touchShown && clock - phaseStarted >= 5) {
+  if (phase === 'waiting' && !touchShown && clock - phaseStarted >= HINT_DELAY_SECONDS) {
     touchShown = true;
     touchHint.classList.add('is-visible');
   }
@@ -162,7 +171,7 @@ function frame(now) {
     const progress = smoothScroll.update(elapsed);
     camera = 1 - progress;
     world.style.transform = `translate3d(0, ${-progress * lagoon.offsetHeight}px, 0)`;
-    if (!scrollShown && !didScroll && clock - phaseStarted >= 5) {
+    if (!scrollShown && !didScroll && clock - phaseStarted >= HINT_DELAY_SECONDS) {
       scrollShown = true;
       scrollHint.hidden = false;
       requestAnimationFrame(() => scrollHint.classList.add('is-visible'));
@@ -229,16 +238,19 @@ window.addEventListener('pageshow', event => {
 async function initialize() {
   try {
     progress(12);
-    const {LagoonRenderer} = await import('./render/lagoon.js?v=safari-scroll-20261110-8');
+    // Resolve the local title face before revealing it, so glyph metrics cannot
+    // change during the entrance. A missing font still leaves readable text.
+    const titleFontReady = document.fonts.load('400 80px "Pinyon Script"', 'Sara i Pau').catch(() => {});
+    const {LagoonRenderer} = await import('./render/lagoon.js?v=presentation-20261111-10');
     if (stopped) return;
     progress(42);
     engine = new LagoonRenderer(stage);
     engine.onContextLost = fallback;
     engine.onLoadProgress = (loaded, total) => progress(62 + Math.round(30 * loaded / total));
     progress(62);
-    await engine.prepare();
+    await Promise.all([engine.prepare(), titleFontReady]);
     if (stopped) return;
-    soundscape.setLiftoff(engine.spriteAssets.manifest.timing.liftoff);
+    soundscape.setLiftoff(engine.solo.timing.liftoff, DEPARTURE_SPEED);
     progress(100);
     await new Promise(resolve => setTimeout(resolve, 450));
     if (stopped) return;

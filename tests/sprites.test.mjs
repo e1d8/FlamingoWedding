@@ -3,21 +3,22 @@ import assert from 'node:assert/strict';
 import {readFile, stat} from 'node:fs/promises';
 import {Texture} from '../vendor/three.module.min.js';
 import {SpriteFlamingo, SpriteCouple, spriteFrame} from '../render/sprites.js';
-import {CAMERA_ASCENT_START, FLIGHT_EXIT_TIME} from '../render/flight-path.js';
+import {CAMERA_ASCENT_START, FLIGHT_EXIT_TIME, departureTiming} from '../render/flight-path.js';
 import {WATERLINE, LEG_SUBMERGENCE, submergedBodyY} from '../render/water-level.js';
 
 const manifest = JSON.parse(await readFile(new URL('../assets/flamingo/sprites.json', import.meta.url), 'utf8'));
+const timing = departureTiming(manifest.timing);
 const assets = {manifest, textures: Object.fromEntries(['takeoff', 'flight', 'pair'].map(name => [name, manifest[name].pages.map(() => new Texture())]))};
 
 test('the complete takeoff plays once, then the wingbeat loops without resetting the story', () => {
   assert.deepEqual(spriteFrame(-1, manifest), {sheet: 'takeoff', frame: 0});
   assert.deepEqual(spriteFrame(0, manifest), spriteFrame(-1, manifest));
-  const end = manifest.timing.hold + manifest.takeoff.frames.length / manifest.timing.takeoffFps;
+  const end = timing.hold + manifest.takeoff.frames.length / timing.takeoffFps;
   assert.deepEqual(spriteFrame(end - .0001, manifest), {sheet: 'takeoff', frame: 31});
   assert.deepEqual(spriteFrame(end + .0001, manifest), {sheet: 'flight', frame: 0});
-  const period = manifest.flight.frames.length / manifest.timing.flightFps;
+  const period = manifest.flight.frames.length / timing.flightFps;
   for (let i = 0; i < 16; i++) {
-    const time = end + (i + .25) / manifest.timing.flightFps;
+    const time = end + (i + .25) / timing.flightFps;
     assert.deepEqual(spriteFrame(time, manifest), {sheet: 'flight', frame: i});
     assert.deepEqual(spriteFrame(time + period * 10, manifest), {sheet: 'flight', frame: i});
   }
@@ -101,8 +102,8 @@ test('clicking starts from the identical resting frame and departure remains con
 
 test('the running poses advance forward on the water before the shallow rightward flight', () => {
   const bird = new SpriteFlamingo(assets);
-  const lift = manifest.timing.liftoff;
-  const runStart = manifest.timing.hold + 4 / manifest.timing.takeoffFps;
+  const lift = timing.liftoff;
+  const runStart = timing.hold + 4 / timing.takeoffFps;
   const startY = .454;
   bird.update(0, runStart, 0, startY);
   const startX = bird.group.position.x;

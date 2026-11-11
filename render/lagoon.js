@@ -1,8 +1,9 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {SpriteFlamingo, SpriteCouple, loadSpriteAssets, createSpriteFlock} from './sprites.js?v=safari-scroll-20261110-8';
+import {SpriteFlamingo, SpriteCouple, loadSpriteAssets, createSpriteFlock} from './sprites.js?v=presentation-20261111-10';
 import {WATERLINE, submergedBodyY} from './water-level.js';
-import {SkyFlights, INTRO_FLOCK_START, INTRO_FLOCK_DURATION} from './sky-flights.js?v=safari-scroll-20261110-8';
+import {SkyFlights, INTRO_FLOCK_START, INTRO_FLOCK_DURATION} from './sky-flights.js?v=presentation-20261111-10';
 import {vertexShader, fragmentShader} from './atmosphere.js';
+import {DEPARTURE_SPEED} from './flight-path.js?v=presentation-20261111-10';
 
 const smooth = THREE.MathUtils.smoothstep;
 
@@ -182,14 +183,14 @@ export class LagoonRenderer {
       this.couple.place(submergedBodyY(this.couple.footY, scale), scale, time);
     }
 
-    if (time - this.lastRing > 2.8 && (story < .5 || pair)) {
+    if (time - this.lastRing > 2.8 && (story < .5 / DEPARTURE_SPEED || pair)) {
       this.lastRing = time;
       const contacts = pair ? this.couple.contactXs() : [this.solo.contactX()];
       contacts.forEach((x, i) => this.ring(x, WATERLINE, time + i * .17, .44));
     }
-    const liftoff = this.spriteAssets.manifest.timing.liftoff;
-    if (story > .4 && story < liftoff) {
-      const step = Math.floor((story - .4) / .25);
+    const liftoff = this.solo.timing.liftoff;
+    if (story > .4 / DEPARTURE_SPEED && story < liftoff) {
+      const step = Math.floor((story * DEPARTURE_SPEED - .4) / .25);
       if (step !== this.lastStep) {
         this.lastStep = step;
         this.ring(this.solo.contactX(), WATERLINE, time, 1.2);
@@ -198,7 +199,7 @@ export class LagoonRenderer {
     const splash = story - liftoff;
     const splashVisible = splash > 0 && splash < 1.55 && !pair;
     if (splash > 0 && this.splashX === undefined) {
-      const {hold, takeoffFps} = this.spriteAssets.manifest.timing;
+      const {hold, takeoffFps} = this.solo.timing;
       this.splashX = this.solo.contactX(Math.floor((liftoff - hold) * takeoffFps));
     }
     this.droplets.visible = splashVisible;

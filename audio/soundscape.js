@@ -238,15 +238,15 @@ export class Soundscape {
     });
   }
 
-  setLiftoff(liftoff) {
+  setLiftoff(liftoff, speed = 1) {
     this.liftoff = liftoff;
     this.cues = [
-      [.12, 'flamingo-1', .22, -.10, 1],
-      [.46, 'water-1', .18, -.10, 1], [.76, 'water-2', .21, .03, 1.04],
+      [.12 / speed, 'flamingo-1', .22, -.10, 1],
+      [.46 / speed, 'water-1', .18, -.10, 1], [.76 / speed, 'water-2', .21, .03, 1.04],
       [this.liftoff, 'water-3', .27, .18, 1.08],
-      [this.liftoff + .02, 'wing', .22, .22, 1.05],
-      [this.liftoff + .69, 'wing', .13, .55, 1.12],
-      [this.liftoff + 1.36, 'wing', .065, .8, 1.18],
+      [this.liftoff + .02 / speed, 'wing', .22, .22, 1.05],
+      [this.liftoff + .69 / speed, 'wing', .13, .55, 1.12],
+      [this.liftoff + 1.36 / speed, 'wing', .065, .8, 1.18],
     ];
   }
 
