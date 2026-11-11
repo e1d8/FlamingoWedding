@@ -1,9 +1,9 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {SpriteFlamingo, SpriteCouple, loadSpriteAssets, createSpriteFlock} from './sprites.js?v=render60-20261111-12';
+import {SpriteFlamingo, SpriteCouple, loadSpriteAssets, createSpriteFlock} from './sprites.js?v=native-raf-20261111-13';
 import {WATERLINE, submergedBodyY} from './water-level.js';
-import {SkyFlights, INTRO_FLOCK_START, INTRO_FLOCK_DURATION} from './sky-flights.js?v=render60-20261111-12';
-import {vertexShader, fragmentShader, RIPPLE_COUNT} from './atmosphere.js?v=render60-20261111-12';
-import {DEPARTURE_SPEED} from './flight-path.js?v=render60-20261111-12';
+import {SkyFlights, INTRO_FLOCK_START, INTRO_FLOCK_DURATION} from './sky-flights.js?v=native-raf-20261111-13';
+import {vertexShader, fragmentShader, RIPPLE_COUNT} from './atmosphere.js?v=native-raf-20261111-13';
+import {DEPARTURE_SPEED} from './flight-path.js?v=native-raf-20261111-13';
 
 const smooth = THREE.MathUtils.smoothstep;
 

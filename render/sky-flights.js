@@ -1,6 +1,6 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {CAMERA_ASCENT_END, CAMERA_SPEED} from './flight-path.js?v=render60-20261111-12';
-import {SpriteFlamingo, createFlightMaterials} from './sprites.js?v=render60-20261111-12';
+import {CAMERA_ASCENT_END, CAMERA_SPEED} from './flight-path.js?v=native-raf-20261111-13';
+import {SpriteFlamingo, createFlightMaterials} from './sprites.js?v=native-raf-20261111-13';
 
 export const INTRO_FLOCK_START = CAMERA_ASCENT_END - 1.25 / CAMERA_SPEED;
 export const INTRO_FLOCK_DURATION = 13;

@@ -1,7 +1,6 @@
-import {CAMERA_ASCENT_START, CAMERA_ASCENT_END, DEPARTURE_SPEED} from './render/flight-path.js?v=render60-20261111-12';
-import {Soundscape} from './audio/soundscape.js?v=render60-20261111-12';
+import {CAMERA_ASCENT_START, CAMERA_ASCENT_END, DEPARTURE_SPEED} from './render/flight-path.js?v=native-raf-20261111-13';
+import {Soundscape} from './audio/soundscape.js?v=native-raf-20261111-13';
 import {SmoothScroll} from './motion/smooth-scroll.js';
-import {FrameLimiter} from './motion/frame-limiter.js?v=render60-20261111-12';
 
 const root = document.documentElement;
 const world = document.querySelector('#world');
@@ -26,7 +25,6 @@ const EASE = 'cubic-bezier(.22, .61, .36, 1)';
 // is exactly one scene; measuring scrollHeight - innerHeight during Safari's
 // toolbar animation can oscillate and trigger scrollTo() inside a touch scroll.
 const smoothScroll = new SmoothScroll({measure: () => lagoon.offsetHeight});
-const frameLimiter = new FrameLimiter();
 const soundscape = new Soundscape({cameraStart: CAMERA_START, cameraEnd: CAMERA_END, onState(state) {
   root.dataset.audioState = state;
 }});
@@ -148,10 +146,6 @@ function dismissScrollHint() {
 
 function frame(now) {
   if (stopped || document.hidden) return;
-  if (!frameLimiter.accept(now)) {
-    frameId = requestAnimationFrame(frame);
-    return;
-  }
   const elapsed = lastFrame === null ? 0 : Math.min((now - lastFrame) / 1000, .1);
   clock += elapsed;
   lastFrame = now;
@@ -225,7 +219,6 @@ document.addEventListener('visibilitychange', () => {
     });
   } else if (!stopped && engine && phase !== 'loading') {
     lastFrame = null;
-    frameLimiter.reset();
     pausedAnimations.forEach(animation => animation.play());
     pausedAnimations.clear();
     frameId = requestAnimationFrame(frame);
@@ -238,7 +231,6 @@ window.addEventListener('pageshow', event => {
   if (event.persisted && !stopped && engine && !document.hidden) {
     cancelAnimationFrame(frameId);
     lastFrame = null;
-    frameLimiter.reset();
     frameId = requestAnimationFrame(frame);
   }
 });
@@ -249,7 +241,7 @@ async function initialize() {
     // Resolve the local title face before revealing it, so glyph metrics cannot
     // change during the entrance. A missing font still leaves readable text.
     const titleFontReady = document.fonts.load('400 80px "Monsieur La Doulaise"', 'Sara i Pau').catch(() => {});
-    const {LagoonRenderer} = await import('./render/lagoon.js?v=render60-20261111-12');
+    const {LagoonRenderer} = await import('./render/lagoon.js?v=native-raf-20261111-13');
     if (stopped) return;
     progress(42);
     engine = new LagoonRenderer(stage);

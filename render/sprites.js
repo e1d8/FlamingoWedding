@@ -1,6 +1,6 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {DEPARTURE_SPEED, departureTiming, flightOffset} from './flight-path.js?v=render60-20261111-12';
-import {IdleMotion} from './idle-motion.js?v=render60-20261111-12';
+import {DEPARTURE_SPEED, departureTiming, flightOffset} from './flight-path.js?v=native-raf-20261111-13';
+import {IdleMotion} from './idle-motion.js?v=native-raf-20261111-13';
 
 const smooth = (a, b, t) => THREE.MathUtils.smoothstep(t, a, b);
 const directory = new URL('../assets/flamingo/half/', import.meta.url);
