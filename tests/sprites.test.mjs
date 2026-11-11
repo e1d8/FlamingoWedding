@@ -6,7 +6,7 @@ import {SpriteFlamingo, SpriteCouple, spriteFrame} from '../render/sprites.js';
 import {CAMERA_ASCENT_START, FLIGHT_EXIT_TIME, departureTiming} from '../render/flight-path.js';
 import {WATERLINE, LEG_SUBMERGENCE, submergedBodyY} from '../render/water-level.js';
 
-const manifest = JSON.parse(await readFile(new URL('../assets/flamingo/sprites.json', import.meta.url), 'utf8'));
+const manifest = JSON.parse(await readFile(new URL('../assets/flamingo/half/sprites.json', import.meta.url), 'utf8'));
 const timing = departureTiming(manifest.timing);
 const assets = {manifest, textures: Object.fromEntries(['takeoff', 'flight', 'pair'].map(name => [name, manifest[name].pages.map(() => new Texture())]))};
 
@@ -28,7 +28,7 @@ test('every frame stays inside a real RGBA sheet that fits a 2048px texture limi
   for (const name of ['takeoff', 'flight', 'pair']) {
     const sequence = manifest[name];
     for (const page of sequence.pages) {
-      const url = new URL(`../assets/flamingo/${page.file}`, import.meta.url);
+      const url = new URL(`../assets/flamingo/half/${page.file}`, import.meta.url);
       assert.ok((await stat(url)).size > 1000);
       const png = await readFile(url);
       assert.equal(png.subarray(1, 4).toString(), 'PNG');
@@ -136,4 +136,34 @@ test('the full silhouette clears the right edge before the upward camera pan on 
       assert.ok(leftmost > aspect / 2, `${width} × ${height}: no tail or wing left behind when the camera starts`);
     }
   }
+});
+
+test('half-resolution atlases retain every pose, anchor, contact and authored world-space dimension', async () => {
+  const original = JSON.parse(await readFile(new URL('../assets/flamingo/sprites.json', import.meta.url), 'utf8'));
+  assert.equal(manifest.pixelScale, .5);
+  assert.equal(manifest.canonicalWidth, original.canonicalWidth);
+  assert.deepEqual(manifest.timing, original.timing);
+  let originalPixels = 0, halfPixels = 0;
+  for (const name of ['takeoff', 'flight', 'pair']) {
+    assert.equal(manifest[name].frames.length, original[name].frames.length);
+    for (let i = 0; i < manifest[name].pages.length; i++) {
+      const a = original[name].pages[i], b = manifest[name].pages[i];
+      assert.equal(b.width, a.width / 2); assert.equal(b.height, a.height / 2);
+      originalPixels += a.width * a.height; halfPixels += b.width * b.height;
+    }
+    for (let i = 0; i < manifest[name].frames.length; i++) {
+      const a = original[name].frames[i], b = manifest[name].frames[i];
+      for (const key of ['rect', 'pivot', 'bounds', 'contact']) {
+        if (a[key]) assert.deepEqual(b[key].map(v => v * 2), a[key]);
+      }
+      if (a.contacts) assert.deepEqual(b.contacts.map(point => point.map(v => v * 2)), a.contacts);
+      assert.equal(b.unitScale / 2, a.unitScale);
+      for (const axis of [0, 1]) {
+        const oldEdge = (a.bounds[axis] - a.pivot[axis]) * a.unitScale;
+        const newEdge = (b.bounds[axis] - b.pivot[axis]) * b.unitScale;
+        assert.equal(newEdge, oldEdge, 'halving pixels must not shrink or shift a bird');
+      }
+    }
+  }
+  assert.equal(halfPixels, originalPixels / 4, 'RGBA texture memory falls to a quarter');
 });

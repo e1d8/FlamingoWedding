@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {Texture, Vector3} from '../vendor/three.module.min.js';
 import {SkyFlights, INTRO_FLOCK_START} from '../render/sky-flights.js';
 
-const manifest = JSON.parse(await readFile(new URL('../assets/flamingo/sprites.json', import.meta.url), 'utf8'));
+const manifest = JSON.parse(await readFile(new URL('../assets/flamingo/half/sprites.json', import.meta.url), 'utf8'));
 const assets = {manifest, textures: Object.fromEntries(['takeoff', 'flight', 'pair'].map(name => [name, manifest[name].pages.map(() => new Texture())]))};
 const portrait = {aspect: 393 / 852, camera: 1, viewHeight: 1};
 function setup(seed = 91367) {

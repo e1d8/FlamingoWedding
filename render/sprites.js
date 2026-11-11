@@ -1,9 +1,9 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {DEPARTURE_SPEED, departureTiming, flightOffset} from './flight-path.js?v=presentation-20261111-10';
-import {IdleMotion} from './idle-motion.js?v=presentation-20261111-10';
+import {DEPARTURE_SPEED, departureTiming, flightOffset} from './flight-path.js?v=render60-20261111-12';
+import {IdleMotion} from './idle-motion.js?v=render60-20261111-12';
 
 const smooth = (a, b, t) => THREE.MathUtils.smoothstep(t, a, b);
-const directory = new URL('../assets/flamingo/', import.meta.url);
+const directory = new URL('../assets/flamingo/half/', import.meta.url);
 
 export function spriteFrame(story, manifest, timing = departureTiming(manifest.timing)) {
   const {hold, takeoffFps, flightFps} = timing;

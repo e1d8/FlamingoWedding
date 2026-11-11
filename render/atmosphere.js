@@ -1,3 +1,5 @@
+export const RIPPLE_COUNT = 4;
+
 export const vertexShader = /* glsl */`
   varying vec2 vUv;
   void main() { vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }
@@ -14,7 +16,7 @@ export const fragmentShader = /* glsl */`
   uniform float uImpulse;
   uniform float uWaterline;
   uniform sampler2D uBirds;
-  uniform vec4 uRipples[8];
+  uniform vec4 uRipples[${RIPPLE_COUNT}];
 
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   float noise(vec2 p) {
@@ -62,8 +64,9 @@ export const fragmentShader = /* glsl */`
   void main() {
     vec2 p = vec2((vUv.x-.5)*uAspect, vUv.y*uViewHeight+uBottom);
     const float horizon = .585;
-    vec3 color = sky(p);
+    vec3 color;
     if(p.y > horizon) {
+      color = sky(p);
       float farRidge = mountain(p,.065,8.,8.);
       float midRidge = mountain(p,.035,15.,17.);
       // Atmospheric color is baked against the sky, not the previously painted ridge.
@@ -78,22 +81,22 @@ export const fragmentShader = /* glsl */`
       float perspective = 1./(depth+.065);
       float wave = sin(p.y*190. + sin(p.x*17.+uTime*.15)*.6-uTime*.65);
       wave += sin(p.y*421.+p.x*91.+uTime*.4)*.36;
-      float swells = fbm(vec2(p.x*8.+uTime*.013,p.y*43.-uTime*.03));
+      // A single low-frequency sample keeps the calm distortion without four
+      // water-noise octaves. The sky and live reflection retain their full look.
+      float swells = noise(vec2(p.x*8.+uTime*.013,p.y*43.-uTime*.03));
       float distortion = (wave*.0011 + (swells-.5)*.004)*smoothstep(0.,.2,depth);
       color = mix(vec3(.72,.43,.40),vec3(.20,.23,.30),smoothstep(0.,.65,depth));
       color = mix(color,sky(vec2(p.x+distortion,2.*horizon-p.y))*.73,.22);
       color += vec3(.055,.025,.03) * (wave*.24 + swells*.3);
-      // Calm capillary waves: perspective compresses the distant surface while
-      // longer foreground crests drift in different directions without a tiled grid.
+      // Two slow wave bands and one shared grain sample replace the finer
+      // capillary layer and separate noise evaluations for crests and glitter.
       float surfaceZ = log(1.+depth*18.)*31.;
       float lateral = p.x/(depth+.14);
-      float wandering = noise(vec2(lateral*2.4+uTime*.009,surfaceZ*.09));
+      float waterGrain = noise(vec2(lateral*9.+uTime*.009,surfaceZ*.35-uTime*.025));
       float longRipple = sin(surfaceZ+sin(lateral*2.1+uTime*.085)*.52-uTime*.21);
-      float smallRipple = sin(surfaceZ*2.37+lateral*.85+wandering*2.4+uTime*.29);
-      float fineRipple = sin(surfaceZ*5.1+lateral*2.6-wandering*3.-uTime*.19);
-      float surfaceSlope = longRipple*.58+smallRipple*.29+fineRipple*.13;
-      float fragments = noise(vec2(lateral*19.+uTime*.018,surfaceZ*.6-uTime*.035));
-      float silk = smoothstep(.55,.96,smallRipple*.78+fineRipple*.22)*smoothstep(.32,.72,fragments);
+      float smallRipple = sin(surfaceZ*2.37+lateral*.85+waterGrain*2.4+uTime*.29);
+      float surfaceSlope = longRipple*.66+smallRipple*.34;
+      float silk = smoothstep(.62,.98,smallRipple)*smoothstep(.36,.80,waterGrain);
       float nearWater = smoothstep(.008,.16,depth);
       color += vec3(.075,.052,.064)*surfaceSlope*nearWater*.32;
       color += vec3(.12,.082,.065)*silk*nearWater*.27;
@@ -102,8 +105,7 @@ export const fragmentShader = /* glsl */`
       float path = exp(-pow(abs(p.x+distortion*2.)/breadth,1.65));
       float bands = sin(perspective*11.+uTime*.58 + sin(p.x*32.+p.y*13.)*.15);
       float glitter = pow(max(0.,bands),13.);
-      float micro = noise(vec2(p.x*430.+uTime*.18,p.y*1400.));
-      float broken = smoothstep(.28,.8,micro);
+      float broken = smoothstep(.28,.8,waterGrain);
       color += vec3(.63,.36,.15) * path * (.18 + glitter*broken*.56);
       color += vec3(.36,.23,.10) * path * pow(max(0.,wave*.72),12.)*.14;
       float nearSurface = smoothstep(.002,.028,depth);
@@ -121,7 +123,7 @@ export const fragmentShader = /* glsl */`
         color = mix(color,vec3(.20,.15,.22),clamp(silhouette*fade,0.,.65));
       }
       // Gentle elliptical rings plus footfalls and the takeoff's wake.
-      for(int i=0;i<8;i++) {
+      for(int i=0;i<${RIPPLE_COUNT};i++) {
         vec4 ripple = uRipples[i];
         float age = uTime-ripple.z;
         if(age>0. && age<5.) {

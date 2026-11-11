@@ -1,9 +1,9 @@
 import * as THREE from '../vendor/three.module.min.js';
-import {SpriteFlamingo, SpriteCouple, loadSpriteAssets, createSpriteFlock} from './sprites.js?v=presentation-20261111-10';
+import {SpriteFlamingo, SpriteCouple, loadSpriteAssets, createSpriteFlock} from './sprites.js?v=render60-20261111-12';
 import {WATERLINE, submergedBodyY} from './water-level.js';
-import {SkyFlights, INTRO_FLOCK_START, INTRO_FLOCK_DURATION} from './sky-flights.js?v=presentation-20261111-10';
-import {vertexShader, fragmentShader} from './atmosphere.js';
-import {DEPARTURE_SPEED} from './flight-path.js?v=presentation-20261111-10';
+import {SkyFlights, INTRO_FLOCK_START, INTRO_FLOCK_DURATION} from './sky-flights.js?v=render60-20261111-12';
+import {vertexShader, fragmentShader, RIPPLE_COUNT} from './atmosphere.js?v=render60-20261111-12';
+import {DEPARTURE_SPEED} from './flight-path.js?v=render60-20261111-12';
 
 const smooth = THREE.MathUtils.smoothstep;
 
@@ -62,7 +62,7 @@ export class LagoonRenderer {
     this.camera = new THREE.OrthographicCamera(-.5, .5, .5, -.5, .1, 100);
     this.camera.position.set(0, .5, 10);
     this.target = new THREE.WebGLRenderTarget(1, 1, {depthBuffer: false});
-    this.ripples = Array.from({length: 8}, () => new THREE.Vector4(0, WATERLINE, -10, 0));
+    this.ripples = Array.from({length: RIPPLE_COUNT}, () => new THREE.Vector4(0, WATERLINE, -10, 0));
     this.rippleCursor = 0;
     this.lastRing = -10;
     this.lastStep = -1;

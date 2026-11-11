@@ -1,6 +1,6 @@
 @font-face {
-  font-family: 'Pinyon Script';
-  src: url('./assets/pinyon-script-title.woff2') format('woff2');
+  font-family: 'Monsieur La Doulaise';
+  src: url('./assets/monsieur-la-doulaise-regular.ttf') format('truetype');
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -46,7 +46,7 @@ button[hidden] { display: none; }
 .high-cloud-one { top: 25%; left: -10%; transform: rotate(-5deg); }
 .high-cloud-two { top: 67%; right: -8%; width: 58%; opacity: .13; animation-delay: -19s; }
 .title-composition { position: absolute; z-index: 2; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 18px 2%; }
-h1 { position: relative; margin: -2px 0 0; max-width: calc(100vw - 44px); font-family: 'Pinyon Script', 'Apple Chancery', 'URW Chancery L', cursive; font-weight: 400; font-style: normal; font-synthesis: none; font-size: clamp(60px, 19vw, 148px); line-height: 1.25; display: flex; align-items: baseline; justify-content: center; gap: .22em; white-space: nowrap; overflow: visible; }
+h1 { position: relative; margin: -2px 0 0; max-width: calc(100vw - 44px); font-family: 'Monsieur La Doulaise', 'Apple Chancery', 'URW Chancery L', cursive; font-weight: 400; font-style: normal; font-synthesis: none; font-size: clamp(60px, 19vw, 148px); line-height: 1.25; display: flex; align-items: baseline; justify-content: center; gap: .22em; white-space: nowrap; overflow: visible; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 /* Leave room inside each animated paint box for the script's swashes. */
 .name-word { display: block; padding: .18em .36em; margin: -.18em -.36em; overflow: visible; }

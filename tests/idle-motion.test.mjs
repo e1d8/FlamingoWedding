@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {Texture} from '../vendor/three.module.min.js';
 import {SpriteFlamingo, SpriteCouple} from '../render/sprites.js';
 
-const manifest = JSON.parse(await readFile(new URL('../assets/flamingo/sprites.json', import.meta.url), 'utf8'));
+const manifest = JSON.parse(await readFile(new URL('../assets/flamingo/half/sprites.json', import.meta.url), 'utf8'));
 const assets = {manifest, textures: Object.fromEntries(['takeoff', 'flight', 'pair'].map(name => [name, manifest[name].pages.map(() => new Texture())]))};
 
 test('idle motion continues from the clicked pose and fades out before the authored takeoff changes pose', () => {

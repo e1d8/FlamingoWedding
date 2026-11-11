@@ -1,13 +1,11 @@
 # Title typeface
 
-The active title uses **Pinyon Script**, by the Pinyon Project Authors / Sorkin Type.
+The active title uses **Monsieur La Doulaise**, by Alejandro Paul / Sudtipos.
 
-- Project and authors: <https://github.com/SorkinType/Pinyon>
-- Font: `pinyon-script-title.woff2`, 4,524 bytes, downloaded from Google Fonts on 2026-11-11.
-- Source request: <https://fonts.googleapis.com/css2?family=Pinyon+Script&text=Sara%20i%20Pau&display=block>
-- The provider supplied a WOFF2 subset for `Sara i Pau` (space, P, S, a, i, r, u); the binary has not been edited locally.
-- License: SIL Open Font License 1.1, included in [OFL-PinyonScript.txt](OFL-PinyonScript.txt).
+- Source: the user-provided `MonsieurLaDoulaise-Regular.ttf`.
+- Runtime file: `monsieur-la-doulaise-regular.ttf`, 52,868 bytes, an exact, unmodified copy of that file.
+- License: the supplied SIL Open Font License 1.1 is preserved in [OFL-MonsieurLaDoulaise.txt](OFL-MonsieurLaDoulaise.txt).
 
-The font is served locally and preloaded. The invitation makes no Google Fonts request at runtime. JavaScript waits for the face to resolve before the introduction; a failed font request leaves a readable system fallback.
+The font is served locally and preloaded. The invitation makes no external font request. JavaScript waits for the face to resolve before the introduction; a failed font request leaves a readable system fallback.
 
-Allura and Cormorant Garamond remain as earlier design studies with their original license files. They are not requested by the invitation.
+Pinyon Script, Allura and Cormorant Garamond remain as earlier design studies with their original license files. They are not requested by the invitation.
